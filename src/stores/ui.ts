@@ -5,7 +5,6 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import { useTheme } from 'vuetify'
 
 interface SnackbarOptions {
   text: string
@@ -22,6 +21,9 @@ interface DialogOptions {
   persistent?: boolean
 }
 
+// Store reference to Vuetify instance
+let vuetifyInstance: any = null
+
 export const useUIStore = defineStore('ui', () => {
   // State
   const drawer = ref(true)
@@ -37,9 +39,6 @@ export const useUIStore = defineStore('ui', () => {
   })
   const dialog = ref<DialogOptions | null>(null)
   const dialogResolve = ref<((value: boolean) => void) | null>(null)
-
-  // Theme
-  const theme = useTheme()
 
   // Computed
   const isDarkMode = computed(() => darkMode.value)
@@ -160,9 +159,16 @@ export const useUIStore = defineStore('ui', () => {
     localStorage.setItem('rail', rail.value.toString())
   }
 
+  // Set Vuetify instance
+  const setVuetifyInstance = (instance: any) => {
+    vuetifyInstance = instance
+  }
+
   // Watch for changes and update theme
   watch(darkMode, (newValue) => {
-    theme.global.name.value = newValue ? 'dark' : 'light'
+    if (vuetifyInstance) {
+      vuetifyInstance.theme.global.name.value = newValue ? 'dark' : 'light'
+    }
     savePreferences()
   })
 
@@ -175,7 +181,9 @@ export const useUIStore = defineStore('ui', () => {
     loadPreferences()
     
     // Apply theme
-    theme.global.name.value = darkMode.value ? 'dark' : 'light'
+    if (vuetifyInstance) {
+      vuetifyInstance.theme.global.name.value = darkMode.value ? 'dark' : 'light'
+    }
 
     // Listen for system theme changes
     if (window.matchMedia) {
@@ -215,6 +223,7 @@ export const useUIStore = defineStore('ui', () => {
     toggleRail,
     toggleDarkMode,
     setLoading,
+    setVuetifyInstance,
     showSnackbar,
     showSuccess,
     showError,

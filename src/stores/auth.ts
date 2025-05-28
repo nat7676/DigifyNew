@@ -5,16 +5,18 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import type { Router } from 'vue-router'
 import axios from 'axios'
-import type { AccessTokenInterface, UserInfo } from '@/modules/shared/shared'
+import type { AccessTokenInterface, UserInfo } from '@/types/shared'
 import { useSystemStore } from './system'
 
 // Store the current systemId for token management
 let currentSystemId = 0
 
+// Router instance will be set during initialization
+let router: Router | null = null
+
 export const useAuthStore = defineStore('auth', () => {
-  const router = useRouter()
   const systemStore = useSystemStore()
 
   // State
@@ -167,7 +169,9 @@ export const useAuthStore = defineStore('auth', () => {
       // Navigate to redirect URL or dashboard
       const destination = redirectUrl.value || '/dashboard'
       redirectUrl.value = null
-      await router.push(destination)
+      if (router) {
+        await router.push(destination)
+      }
     } finally {
       loading.value = false
     }
@@ -212,7 +216,9 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     // Navigate to login
-    await router.push('/login')
+    if (router) {
+      await router.push('/login')
+    }
   }
 
   const switchSystem = async (systemId: number) => {
@@ -248,6 +254,10 @@ export const useAuthStore = defineStore('auth', () => {
       }
       sessionTimeoutId.value = setTimeout(checkSessionTimeout, 60000) as unknown as number // Check every minute
     }
+  }
+
+  const setRouterInstance = (routerInstance: Router) => {
+    router = routerInstance
   }
 
   const initialize = async () => {
@@ -286,6 +296,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Methods
     setRedirectUrl,
+    setRouterInstance,
     hasRole,
     hasAnyRole,
     login,

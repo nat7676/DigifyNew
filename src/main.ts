@@ -52,11 +52,17 @@ async function initializeApp() {
     logError(event.reason, 'Promise')
   })
 
-  // Initialize Pinia before router
+  // Initialize Pinia
   const pinia = createPinia()
   app.use(pinia)
 
-  // Initialize core stores
+  // Setup router
+  app.use(router)
+
+  // Setup Vuetify
+  app.use(vuetify)
+
+  // Initialize core stores after app is configured
   const { useAuthStore } = await import('./stores/auth')
   const { useSystemStore } = await import('./stores/system')
   const { useUIStore } = await import('./stores/ui')
@@ -64,6 +70,12 @@ async function initializeApp() {
   const authStore = useAuthStore()
   const systemStore = useSystemStore()
   const uiStore = useUIStore()
+
+  // Set router instance in auth store
+  authStore.setRouterInstance(router)
+  
+  // Set Vuetify instance in UI store
+  uiStore.setVuetifyInstance(vuetify)
 
   try {
     // Initialize stores
@@ -78,12 +90,6 @@ async function initializeApp() {
     console.error('Failed to initialize stores:', error)
     logError(error as Error, 'Store initialization')
   }
-
-  // Setup router
-  app.use(router)
-
-  // Setup Vuetify
-  app.use(vuetify)
 
   // Mount application
   app.mount('#app')
