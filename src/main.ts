@@ -92,17 +92,25 @@ async function initializeApp() {
   }
 
   // Mount application
-  app.mount('#app')
-
-  // Development helpers
-  if (isDevelopment) {
-    (window as any).__APP__ = app
-    (window as any).__ROUTER__ = router
-    (window as any).__STORES__ = { authStore, systemStore, uiStore }
-    (window as any).__PINIA__ = pinia
+  try {
+    app.mount('#app')
+    console.log('✅ Digify initialized successfully')
+  } catch (mountError) {
+    console.error('Error mounting application:', mountError)
+    throw mountError
   }
 
-  console.log('✅ Digify initialized successfully')
+  // Development helpers - temporarily disabled to debug issue
+  // if (isDevelopment) {
+  //   try {
+  //     (window as any).__APP__ = app;
+  //     (window as any).__ROUTER__ = router;
+  //     (window as any).__STORES__ = { authStore, systemStore, uiStore };
+  //     (window as any).__PINIA__ = pinia;
+  //   } catch (devError) {
+  //     console.error('Error setting development helpers:', devError)
+  //   }
+  // }
 }
 
 // Initialize application

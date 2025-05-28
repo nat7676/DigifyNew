@@ -22,9 +22,23 @@ export default defineConfig({
     }),
     AutoImport({
       imports: [
-        'vue',
-        'vue-router',
-        'pinia'
+        {
+          'vue': [
+            'computed',
+            'ref',
+            'reactive',
+            'watch',
+            'watchEffect',
+            'onMounted',
+            'onUnmounted',
+            'defineProps',
+            'defineEmits',
+            'inject',
+            'provide'
+          ],
+          'vue-router': ['useRouter', 'useRoute'],
+          'pinia': ['defineStore', 'storeToRefs']
+        }
       ],
       dts: 'src/auto-imports.d.ts',
       dirs: ['src/composables/**', 'src/stores/**'],

@@ -122,12 +122,16 @@ Recreate DigifyOld with modern Vue 3/Vuetify 3/TypeScript/Composition API archit
   - Solution: Pass router instance via setRouterInstance method instead of using useRouter()
 - ✅ FIXED: useTheme must be called from inside a setup function
   - Solution: Pass Vuetify instance to UI store instead of calling useTheme directly
+- ✅ FIXED: "app is not a function" error during initialization
+  - Solution: Configure auto-import plugin to exclude `createApp` to prevent global conflict
+  - Explicitly list which Vue functions to auto-import
 
 ## Current Status
 - Application foundation is complete and working without errors
 - Run `npm install` and `npm run dev` to start the application
 - Login screen is accessible at http://localhost:8091
 - All core systems are initialized properly
+- No console errors
 
 ## Notes
 - All server communication must remain exactly as in DigifyOld
