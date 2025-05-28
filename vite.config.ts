@@ -12,10 +12,7 @@ export default defineConfig({
       template: { transformAssetUrls }
     }),
     vuetify({
-      autoImport: true,
-      styles: {
-        configFile: 'src/assets/styles/settings.scss'
-      }
+      autoImport: true
     }),
     Components({
       dts: 'src/components.d.ts',
@@ -67,6 +64,16 @@ export default defineConfig({
           'vuetify': ['vuetify'],
           'utils': ['lodash', 'date-fns', 'axios']
         }
+      }
+    }
+  },
+  css: {
+    preprocessorOptions: {
+      sass: {
+        additionalData: ''
+      },
+      scss: {
+        additionalData: ''
       }
     }
   }

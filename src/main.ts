@@ -14,7 +14,6 @@ import router from './router'
 import vuetify from './plugins/vuetify'
 
 // Styles
-import '@mdi/font/css/materialdesignicons.css'
 import './assets/styles/main.scss'
 
 // Global error handler

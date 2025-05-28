@@ -2,7 +2,10 @@
  * Vuetify 3 Plugin Configuration
  */
 
+// Vuetify styles
 import 'vuetify/styles'
+import '@mdi/font/css/materialdesignicons.css'
+
 import { createVuetify, type ThemeDefinition } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
