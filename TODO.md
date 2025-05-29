@@ -6,6 +6,7 @@ Recreate DigifyOld with modern Vue 3/Vuetify 3/TypeScript/Composition API archit
 ## Critical Constraints
 - ✅ DO NOT modify shared.ts or sharedhelpers.ts (sacred modules)
 - ✅ Maintain exact server communication structure (no key/case changes)
+- ✅ ALL server communication goes through WebSocket (socket.io) - NO direct HTTP calls
 - ✅ Use modern Vue 3 patterns exclusively (Composition API)
 - ✅ Implement proper TypeScript with strict mode
 
@@ -45,8 +46,9 @@ Recreate DigifyOld with modern Vue 3/Vuetify 3/TypeScript/Composition API archit
   - [x] Update server URLs to napi.digify.no
   - [x] Initialize socket connections on app start
 - [x] Implement actual login API
-  - [x] Create auth.service.ts with all login methods
-  - [x] Update auth store to use real API calls
+  - [x] Create auth.service.ts with all login methods using WebSocket
+  - [x] Update auth store to use socket.io communication
+  - [x] ALL API calls go through NodeEvent.Api (no direct HTTP)
   - [x] Handle token storage and refresh
   - [x] Send AccessToken to socket servers
 - [x] Implement template retrieval
@@ -140,6 +142,9 @@ Recreate DigifyOld with modern Vue 3/Vuetify 3/TypeScript/Composition API archit
 - ✅ FIXED: "app is not a function" error during initialization
   - Solution: Configure auto-import plugin to exclude `createApp` to prevent global conflict
   - Explicitly list which Vue functions to auto-import
+- ✅ FIXED: Incorrect HTTP implementation for login
+  - Solution: Updated auth.service.ts to use WebSocket (socket.io) for ALL communication
+  - All API calls now go through NodeEvent.Api event as in DigifyOld
 
 ## Current Status
 - Application foundation is complete and working without errors

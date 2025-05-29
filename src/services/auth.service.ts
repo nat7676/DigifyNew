@@ -1,58 +1,104 @@
 /**
  * Authentication Service
  * Handles API calls for login, logout, and token management
+ * All communication goes through WebSocket (socket.io)
  */
 
-import http from './http.service'
+import socketService from './socket.service'
 import type { AccessTokenInterface } from '@/types/shared'
+import { NodeEvent } from '@/modules/shared/shared'
 
 interface LoginResponse {
-  token?: AccessTokenInterface
-  error?: string
+  tables?: Array<{
+    rows: Array<{
+      AccessToken?: string
+      systemid?: number
+      userid?: number
+      PortalID?: number
+      AccessLevelID?: number
+      roles?: { [RoleID: number]: boolean }
+      expire?: number
+      SessionID?: string
+      error?: string
+    }>
+  }>
 }
 
-interface LoginRequest {
-  ajax: string
-  func: string
-  [key: string]: any
+interface ApiRequest {
+  path: string
+  data: any
+  settings?: {
+    sensitivecontent?: boolean
+  }
 }
 
 class AuthService {
   /**
+   * Execute API request through socket.io
+   */
+  private async executeApiRequest(request: ApiRequest): Promise<any> {
+    const response = await socketService.sendRequest<any>(
+      NodeEvent.Api,
+      request
+    )
+    
+    // Handle the SQL response format
+    if (response.ApiResp?.tables && response.ApiResp.tables.length > 0) {
+      const firstTable = response.ApiResp.tables[0]
+      if (firstTable.rows && firstTable.rows.length > 0) {
+        return firstTable.rows[0]
+      }
+    }
+    
+    throw new Error('Invalid response format')
+  }
+
+  /**
    * Login with mobile number and password
    */
   async login(mobile: string, password: string): Promise<AccessTokenInterface> {
-    const request: LoginRequest = {
-      ajax: 'AjaxLogin',
-      func: 'login',
-      email: mobile, // The API expects 'email' but we use mobile numbers
-      password: password
-    }
-
-    const response = await http.ajax<LoginResponse>(request)
+    const response = await this.executeApiRequest({
+      path: '/Cloud/customer/loginnew/login',
+      data: {
+        mobile: mobile,
+        password: password
+      },
+      settings: {
+        sensitivecontent: true // Don't log passwords
+      }
+    })
     
     if (response.error) {
       throw new Error(response.error)
     }
     
-    if (!response.token) {
+    if (!response.AccessToken) {
       throw new Error('No token received from server')
     }
 
-    return response.token
+    // Build AccessTokenInterface from response
+    return {
+      AccessToken: response.AccessToken,
+      systemid: response.systemid,
+      userid: response.userid,
+      PortalID: response.PortalID,
+      AccessLevelID: response.AccessLevelID,
+      roles: response.roles || {},
+      expire: response.expire,
+      SessionID: response.SessionID
+    }
   }
 
   /**
    * Send magic code to mobile number
    */
   async sendMagicCode(mobile: string): Promise<void> {
-    const request: LoginRequest = {
-      ajax: 'AjaxLogin',
-      func: 'sendMagicCode',
-      phone: mobile
-    }
-
-    const response = await http.ajax<{ success?: boolean; error?: string }>(request)
+    const response = await this.executeApiRequest({
+      path: '/Cloud/customer/loginnew/sendMagicCode',
+      data: {
+        mobile: mobile
+      }
+    })
     
     if (response.error) {
       throw new Error(response.error)
@@ -63,84 +109,107 @@ class AuthService {
    * Login with magic code
    */
   async loginWithMagicCode(mobile: string, code: string): Promise<AccessTokenInterface> {
-    const request: LoginRequest = {
-      ajax: 'AjaxLogin',
-      func: 'loginWithMagicCode',
-      phone: mobile,
-      code: code
-    }
-
-    const response = await http.ajax<LoginResponse>(request)
+    const response = await this.executeApiRequest({
+      path: '/Cloud/customer/loginnew/loginWithMagicCode',
+      data: {
+        mobile: mobile,
+        code: code
+      }
+    })
     
     if (response.error) {
       throw new Error(response.error)
     }
     
-    if (!response.token) {
+    if (!response.AccessToken) {
       throw new Error('No token received from server')
     }
 
-    return response.token
+    return {
+      AccessToken: response.AccessToken,
+      systemid: response.systemid,
+      userid: response.userid,
+      PortalID: response.PortalID,
+      AccessLevelID: response.AccessLevelID,
+      roles: response.roles || {},
+      expire: response.expire,
+      SessionID: response.SessionID
+    }
   }
 
   /**
    * Login with Microsoft account
    */
   async loginWithMicrosoft(msToken: string, account: { id: string; username: string; name: string }): Promise<AccessTokenInterface> {
-    const request: LoginRequest = {
-      ajax: 'AjaxLogin',
-      func: 'microsoftLogin',
-      msToken: msToken,
-      account: account
-    }
-
-    const response = await http.ajax<LoginResponse>(request)
+    const response = await this.executeApiRequest({
+      path: '/Cloud/customer/loginnew/microsoftLogin',
+      data: {
+        msToken: msToken,
+        account: account
+      }
+    })
     
     if (response.error) {
       throw new Error(response.error)
     }
     
-    if (!response.token) {
+    if (!response.AccessToken) {
       throw new Error('No token received from server')
     }
 
-    return response.token
+    return {
+      AccessToken: response.AccessToken,
+      systemid: response.systemid,
+      userid: response.userid,
+      PortalID: response.PortalID,
+      AccessLevelID: response.AccessLevelID,
+      roles: response.roles || {},
+      expire: response.expire,
+      SessionID: response.SessionID
+    }
   }
 
   /**
    * Refresh access token
    */
   async refreshToken(currentToken: string): Promise<AccessTokenInterface> {
-    const request: LoginRequest = {
-      ajax: 'AjaxLogin',
-      func: 'refreshToken',
-      token: currentToken
-    }
-
-    const response = await http.ajax<LoginResponse>(request)
+    const response = await this.executeApiRequest({
+      path: '/Cloud/customer/loginnew/refreshToken',
+      data: {
+        token: currentToken
+      }
+    })
     
     if (response.error) {
       throw new Error(response.error)
     }
     
-    if (!response.token) {
+    if (!response.AccessToken) {
       throw new Error('No token received from server')
     }
 
-    return response.token
+    return {
+      AccessToken: response.AccessToken,
+      systemid: response.systemid,
+      userid: response.userid,
+      PortalID: response.PortalID,
+      AccessLevelID: response.AccessLevelID,
+      roles: response.roles || {},
+      expire: response.expire,
+      SessionID: response.SessionID
+    }
   }
 
   /**
    * Validate token
    */
   async validateToken(token: string): Promise<boolean> {
-    const request: LoginRequest = {
-      ajax: 'AjaxLogin',
-      func: 'validateToken',
-      token: token
-    }
-
-    const response = await http.ajax<{ valid: boolean }>(request)
+    const response = await this.executeApiRequest({
+      path: '/Cloud/customer/loginnew/validateToken',
+      data: {
+        token: token
+      }
+    })
     
     return response.valid || false
   }
@@ -149,37 +218,44 @@ class AuthService {
    * Logout
    */
   async logout(token: string): Promise<void> {
-    const request: LoginRequest = {
-      ajax: 'AjaxLogin',
-      func: 'logout',
-      token: token
-    }
-
-    await http.ajax(request)
+    await this.executeApiRequest({
+      path: '/Cloud/customer/loginnew/logout',
+      data: {
+        token: token
+      }
+    })
   }
 
   /**
    * Switch system context
    */
   async switchSystem(systemId: number, token: string): Promise<AccessTokenInterface> {
-    const request: LoginRequest = {
-      ajax: 'AjaxLogin',
-      func: 'switchSystem',
-      systemId: systemId,
-      token: token
-    }
-
-    const response = await http.ajax<LoginResponse>(request)
+    const response = await this.executeApiRequest({
+      path: '/Cloud/customer/loginnew/switchSystem',
+      data: {
+        systemId: systemId,
+        token: token
+      }
+    })
     
     if (response.error) {
       throw new Error(response.error)
     }
     
-    if (!response.token) {
+    if (!response.AccessToken) {
       throw new Error('No token received from server')
     }
 
-    return response.token
+    return {
+      AccessToken: response.AccessToken,
+      systemid: response.systemid,
+      userid: response.userid,
+      PortalID: response.PortalID,
+      AccessLevelID: response.AccessLevelID,
+      roles: response.roles || {},
+      expire: response.expire,
+      SessionID: response.SessionID
+    }
   }
 }
 

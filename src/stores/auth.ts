@@ -6,7 +6,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Router } from 'vue-router'
-import axios from 'axios'
 import type { AccessTokenInterface, UserInfo } from '@/types/shared'
 import { useSystemStore } from './system'
 import authService from '@/services/auth.service'
@@ -110,11 +109,6 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Schedule token refresh
     scheduleTokenRefresh(token)
-
-    // Configure axios default header
-    if (axios.defaults.headers) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token.AccessToken}`
-    }
   }
 
   const scheduleTokenRefresh = (token: AccessTokenInterface) => {
@@ -225,11 +219,6 @@ export const useAuthStore = defineStore('auth', () => {
     if (sessionTimeoutId.value) {
       clearTimeout(sessionTimeoutId.value)
       sessionTimeoutId.value = null
-    }
-
-    // Clear axios header
-    if (axios.defaults.headers) {
-      delete axios.defaults.headers.common['Authorization']
     }
 
     // Navigate to login
