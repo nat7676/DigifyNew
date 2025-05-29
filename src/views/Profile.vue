@@ -283,14 +283,16 @@ const fetchUserData = async () => {
   try {
     // Fetch current user data from API
     const response = await socketService.sendRequest(NodeEvent.Api, {
-      path: '/Cloud/customer/user/UserCurrentGet',
-      data: {}
+      path: '/logininfo',
+      data: {},
+      settings: {}
     })
     
     console.log('User data response:', response)
     
-    if (response.ApiResp?.result?.length > 0) {
-      userData.value = response.ApiResp.result[0]
+    // The response has a different structure - it's in tables format
+    if (response.ApiResp?.tables?.[0]?.rows?.length > 0) {
+      userData.value = response.ApiResp.tables[0].rows[0]
       
       // Store the UniqueSystemKey in template service for layout generation
       if (userData.value.UniqueSystemKey) {

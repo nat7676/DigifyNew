@@ -98,14 +98,16 @@ export const useAuthStore = defineStore('auth', () => {
     // Fetch user data to get UniqueSystemKey
     try {
       const response = await socketService.sendRequest(NodeEvent.Api, {
-        path: '/Cloud/customer/user/UserCurrentGet',
-        data: {}
+        path: '/logininfo',
+        data: {},
+        settings: {}
       })
       
-      console.log('UserCurrentGet response (login):', response)
+      console.log('logininfo response (login):', response)
       
-      if (response.ApiResp?.result?.length > 0) {
-        const userData = response.ApiResp.result[0]
+      // The response has a different structure - it's in tables format
+      if (response.ApiResp?.tables?.[0]?.rows?.length > 0) {
+        const userData = response.ApiResp.tables[0].rows[0]
         console.log('User data (login):', userData)
         console.log('UniqueSystemKey (login):', userData.UniqueSystemKey)
         
@@ -116,6 +118,11 @@ export const useAuthStore = defineStore('auth', () => {
           console.log('Stored UniqueSystemKey in template service (login)')
         } else {
           console.warn('No UniqueSystemKey found in user data (login)')
+        }
+        
+        // Also store other user data if needed
+        if (userData.UniqueUserKey) {
+          console.log('UniqueUserKey:', userData.UniqueUserKey)
         }
       } else {
         console.warn('No user data returned from API (login)')
@@ -360,14 +367,16 @@ export const useAuthStore = defineStore('auth', () => {
           // Also fetch user data to get UniqueSystemKey
           try {
             const response = await socketService.sendRequest(NodeEvent.Api, {
-              path: '/Cloud/customer/user/UserCurrentGet',
-              data: {}
+              path: '/logininfo',
+              data: {},
+              settings: {}
             })
             
-            console.log('UserCurrentGet response:', response)
+            console.log('logininfo response:', response)
             
-            if (response.ApiResp?.result?.length > 0) {
-              const userData = response.ApiResp.result[0]
+            // The response has a different structure - it's in tables format
+            if (response.ApiResp?.tables?.[0]?.rows?.length > 0) {
+              const userData = response.ApiResp.tables[0].rows[0]
               console.log('User data:', userData)
               console.log('UniqueSystemKey:', userData.UniqueSystemKey)
               
@@ -378,6 +387,21 @@ export const useAuthStore = defineStore('auth', () => {
                 console.log('Stored UniqueSystemKey in template service')
               } else {
                 console.warn('No UniqueSystemKey found in user data')
+              }
+              
+              // Also store other user data if needed
+              if (userData.UniqueUserKey) {
+                console.log('UniqueUserKey:', userData.UniqueUserKey)
+              }
+              
+              // Second table contains system users
+              if (response.ApiResp.tables[1]?.rows) {
+                console.log('System users:', response.ApiResp.tables[1].rows)
+              }
+              
+              // Third table contains settings
+              if (response.ApiResp.tables[2]?.rows) {
+                console.log('User settings:', response.ApiResp.tables[2].rows)
               }
             } else {
               console.warn('No user data returned from API')
