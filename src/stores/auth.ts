@@ -6,13 +6,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { AccessTokenInterface, UserInfo } from '@/types/shared'
-import { useSystemStore } from './system'
 import { NodeEvent } from '@/modules/shared/shared'
 import authService from '@/services/auth.service'
 import socketService from '@/services/socket.service'
 
 export const useAuthStore = defineStore('auth', () => {
-  const systemStore = useSystemStore()
 
   // State
   const accessTokens = ref<{ [systemId: number]: AccessTokenInterface }>({})
@@ -298,6 +296,8 @@ export const useAuthStore = defineStore('auth', () => {
     const storageKeys = Object.keys(localStorage)
     const tokenKeys = storageKeys.filter(key => key.startsWith('AccessTokenObj['))
     
+    let firstValidToken: AccessTokenInterface | null = null
+    
     tokenKeys.forEach(key => {
       const matches = key.match(/AccessTokenObj\[(\d+)\]/)
       if (matches && matches[1]) {
@@ -310,6 +310,7 @@ export const useAuthStore = defineStore('auth', () => {
           // Set the first valid token's system as current
           if (!currentSystemId.value) {
             currentSystemId.value = systemId
+            firstValidToken = token
             
             // Update user info from the token
             user.value = {
@@ -326,6 +327,76 @@ export const useAuthStore = defineStore('auth', () => {
         }
       }
     })
+
+    // If we found a valid token, send it to all sockets after they connect
+    if (firstValidToken && isAuthenticated.value) {
+      console.log('Found valid token, will send to sockets when connected')
+      
+      // Create a function to send the token
+      const sendStoredToken = async () => {
+        // Check if socket is connected
+        if (!socketService.isConnected.value) {
+          console.log('Socket not connected yet, waiting...')
+          return false
+        }
+        
+        console.log('Sending stored AccessToken to all sockets...')
+        try {
+          await socketService.sendRequest(NodeEvent.AccessToken, {
+            AccessToken: firstValidToken!.AccessToken,
+            LatestChatMsg: new Date(),
+            SessionID: firstValidToken!.SessionID
+          })
+          console.log('✅ Stored AccessToken sent to all connected sockets')
+          
+          // Also fetch user data to get UniqueSystemKey
+          try {
+            const response = await socketService.sendRequest(NodeEvent.Api, {
+              path: '/Cloud/customer/user/UserCurrentGet',
+              data: {}
+            })
+            
+            if (response.ApiResp?.result?.length > 0) {
+              const userData = response.ApiResp.result[0]
+              console.log('Fetched user data with UniqueSystemKey:', userData.UniqueSystemKey)
+              
+              // Store the UniqueSystemKey in template service
+              if (userData.UniqueSystemKey) {
+                const { default: templateService } = await import('@/services/template.service')
+                templateService.setSystemUniqueKey(userData.UniqueSystemKey)
+              }
+            }
+          } catch (error) {
+            console.error('Failed to fetch user data during initialization:', error)
+          }
+          return true
+        } catch (error) {
+          console.error('Failed to send stored AccessToken to sockets:', error)
+          return false
+        }
+      }
+      
+      // Try immediately if connected, otherwise retry
+      let attempts = 0
+      const maxAttempts = 10
+      const tryToSend = async () => {
+        if (await sendStoredToken()) {
+          return // Success
+        }
+        
+        attempts++
+        if (attempts < maxAttempts) {
+          setTimeout(tryToSend, 500) // Retry after 500ms
+        } else {
+          console.error('Failed to send AccessToken after', maxAttempts, 'attempts')
+        }
+      }
+      
+      // Start trying after a small delay
+      setTimeout(tryToSend, 500)
+    } else {
+      console.log('No valid token found during initialization')
+    }
 
     // Start session timeout monitoring
     checkSessionTimeout()
