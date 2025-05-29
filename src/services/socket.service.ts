@@ -7,7 +7,7 @@ import { io, type Socket } from 'socket.io-client'
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import type { NodeObject } from '@/modules/shared/shared'
-import { NodeEvent, SubmitType, eventconfig } from '@/modules/shared/shared'
+import { NodeEvent, SubmitType, NodeSpreadType, eventconfig } from '@/modules/shared/shared'
 import { logRequest, logResponse, logError, logConnection } from '@/utils/logger'
 
 // Socket state
