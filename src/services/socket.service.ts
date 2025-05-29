@@ -107,14 +107,11 @@ export function initializeSockets() {
       reconnectAttempts.value++
     })
 
-    // Handle server responses
-    socket.on('response', (data: NodeObject) => {
-      handleResponse(data)
-    })
-
-    // Handle server-initiated events
-    socket.on('serverEvent', (data: NodeObject) => {
-      handleServerEvent(data)
+    // Handle all server responses through NewObject event
+    socket.onAny((event: string, data: NodeObject) => {
+      if (event === NodeEvent.NewObject || event === 'NewObject') {
+        handleResponse(data)
+      }
     })
 
     sockets.value.push(socket)
@@ -186,20 +183,24 @@ export async function sendRequest<T = any>(
 
   // Check authentication requirements
   const config = eventconfig[event]
-  if (config.LoginRequired && !authStore.isAuthenticated) {
+  if (config.LoginRequired && !authStore.isAuthenticated && event !== NodeEvent.Api) {
     throw new Error('Authentication required')
   }
 
   // Generate request ID
   const guid = generateGuid()
   
-  // Create request object
-  const request: NodeObject = {
-    event,
+  // Create request object with proper structure
+  const request: any = {
+    Event: event,  // Note: capital E for Event
     SubmitType: SubmitType.Request,
-    guid,
-    login: authStore.currentToken || undefined,
-    [event]: data
+    Guid: guid,    // Note: capital G for Guid
+    [event]: data  // Event-specific data
+  }
+  
+  // Only add login if we have a token
+  if (authStore.currentToken) {
+    request.login = authStore.currentToken
   }
 
   // Create promise for response
@@ -220,41 +221,46 @@ export async function sendRequest<T = any>(
     })
   })
 
-  // Send request
-  socket.emit('request', request)
+  // Send request using NewObject event
+  socket.emit(NodeEvent.NewObject, request)
 
   return promise
 }
 
 // Handle server response
 function handleResponse(response: NodeObject) {
-  const { guid, SubmitType: submitType } = response
+  const { Guid: guid, SubmitType: submitType, Event: event } = response
 
   if (!guid) return
 
   const pending = pendingRequests.value.get(guid)
-  if (!pending) return
-
+  
   // Handle different response types
   switch (submitType) {
     case SubmitType.Response:
     case SubmitType.Ack:
-      // Success response
-      clearTimeout(pending.timeout)
-      pendingRequests.value.delete(guid)
-      
-      // Extract event-specific data
-      const eventData = response[response.event as NodeEvent]
-      pending.resolve(eventData)
+      if (pending) {
+        // Success response
+        clearTimeout(pending.timeout)
+        pendingRequests.value.delete(guid)
+        
+        // Extract event-specific data - the response is in the event field
+        pending.resolve(response)
+      } else {
+        // Server-initiated event (not a response to our request)
+        emitToSubscribers(event, response)
+      }
       break
 
     case SubmitType.Error:
-      // Error response
-      clearTimeout(pending.timeout)
-      pendingRequests.value.delete(guid)
-      
-      const error = response.error || 'Request failed'
-      pending.reject(new Error(error))
+      if (pending) {
+        // Error response
+        clearTimeout(pending.timeout)
+        pendingRequests.value.delete(guid)
+        
+        const error = response.error || response.Error || 'Request failed'
+        pending.reject(new Error(error))
+      }
       break
 
     case SubmitType.Stream:
@@ -264,15 +270,6 @@ function handleResponse(response: NodeObject) {
       emitToSubscribers(streamEvent, response)
       break
   }
-}
-
-// Handle server-initiated events
-function handleServerEvent(data: NodeObject) {
-  const { event } = data
-  if (!event) return
-
-  // Emit to subscribers
-  emitToSubscribers(event, data)
 }
 
 // Subscribe to events

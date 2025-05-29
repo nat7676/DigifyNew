@@ -145,6 +145,10 @@ Recreate DigifyOld with modern Vue 3/Vuetify 3/TypeScript/Composition API archit
 - ✅ FIXED: Incorrect HTTP implementation for login
   - Solution: Updated auth.service.ts to use WebSocket (socket.io) for ALL communication
   - All API calls now go through NodeEvent.Api event as in DigifyOld
+- ✅ FIXED: Socket.io event structure mismatch
+  - Solution: Use "NewObject" as the single socket event name (not individual NodeEvent names)
+  - Proper NodeObject structure with capital letters (Event, Guid, SubmitType)
+  - Correct API endpoint paths (/public/login/login instead of /Cloud/customer/loginnew/login)
 
 ## Current Status
 - Application foundation is complete and working without errors

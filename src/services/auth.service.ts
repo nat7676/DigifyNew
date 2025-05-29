@@ -27,8 +27,11 @@ interface LoginResponse {
 interface ApiRequest {
   path: string
   data: any
-  settings?: {
+  settings: {
     sensitivecontent?: boolean
+    array?: boolean
+    cacheuser?: boolean
+    cachesystem?: boolean
   }
 }
 
@@ -58,9 +61,9 @@ class AuthService {
    */
   async login(mobile: string, password: string): Promise<AccessTokenInterface> {
     const response = await this.executeApiRequest({
-      path: '/Cloud/customer/loginnew/login',
+      path: '/public/login/login',
       data: {
-        mobile: mobile,
+        username: mobile, // The API uses 'username' field
         password: password
       },
       settings: {
@@ -94,10 +97,11 @@ class AuthService {
    */
   async sendMagicCode(mobile: string): Promise<void> {
     const response = await this.executeApiRequest({
-      path: '/Cloud/customer/loginnew/sendMagicCode',
+      path: '/public/magicalcode',
       data: {
         mobile: mobile
-      }
+      },
+      settings: {}
     })
     
     if (response.error) {
@@ -174,10 +178,11 @@ class AuthService {
    */
   async refreshToken(currentToken: string): Promise<AccessTokenInterface> {
     const response = await this.executeApiRequest({
-      path: '/Cloud/customer/loginnew/refreshToken',
+      path: '/public/getAccessTokenFromRefreshTokenNew',
       data: {
-        token: currentToken
-      }
+        refreshToken: currentToken
+      },
+      settings: {}
     })
     
     if (response.error) {
@@ -219,10 +224,11 @@ class AuthService {
    */
   async logout(token: string): Promise<void> {
     await this.executeApiRequest({
-      path: '/Cloud/customer/loginnew/logout',
+      path: '/Cloud/customer/user/logout',
       data: {
         token: token
-      }
+      },
+      settings: {}
     })
   }
 
