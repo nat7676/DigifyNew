@@ -6,14 +6,11 @@
 import { io, type Socket } from 'socket.io-client'
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { useSystemStore } from '@/stores/system'
-import { useUIStore } from '@/stores/ui'
 import type { NodeObject } from '@/modules/shared/shared'
 import { NodeEvent, SubmitType, eventconfig } from '@/modules/shared/shared'
 
 // Socket state
 const sockets = ref<Socket[]>([])
-const activeSocketIndex = ref(0)
 const isConnected = ref(false)
 const reconnectAttempts = ref(0)
 const subscriptions = ref<Map<string, Set<(data: any) => void>>>(new Map())
@@ -49,17 +46,17 @@ function generateGuid(): string {
   })
 }
 
-// Get next server URL (round-robin)
-function getNextServerUrl(): string {
-  const url = serverUrls[activeSocketIndex.value]
-  activeSocketIndex.value = (activeSocketIndex.value + 1) % serverUrls.length
-  return url
-}
+// Get next server URL (round-robin) - currently not used due to multi-socket approach
+// function getNextServerUrl(): string {
+//   const url = serverUrls[activeSocketIndex.value]
+//   activeSocketIndex.value = (activeSocketIndex.value + 1) % serverUrls.length
+//   return url
+// }
 
 // Initialize socket connections
 export function initializeSockets() {
   const authStore = useAuthStore()
-  const systemStore = useSystemStore()
+  // const systemStore = useSystemStore() // Currently not used
   
   // Create connection promise
   connectionPromise = new Promise((resolve) => {
@@ -147,7 +144,7 @@ export function disconnect() {
 // Get active socket for requests
 function getActiveSocket(): Socket | null {
   // Try to find a connected socket
-  const connectedSocket = sockets.value.find(socket => socket.connected)
+  const connectedSocket = sockets.value.find(socket => (socket as any).connected === true)
   if (connectedSocket) return connectedSocket
 
   // If no sockets connected, return first one
@@ -179,7 +176,6 @@ export async function sendRequest<T = any>(
   }
 
   const authStore = useAuthStore()
-  const uiStore = useUIStore()
 
   // Check authentication requirements
   const config = eventconfig[event]
@@ -231,6 +227,16 @@ export async function sendRequest<T = any>(
 function handleResponse(response: NodeObject) {
   const { Guid: guid, SubmitType: submitType, Event: event } = response
 
+  // Debug logging for development
+  if (import.meta.env.DEV) {
+    console.log('Socket response:', {
+      event,
+      guid,
+      submitType,
+      response: JSON.stringify(response).substring(0, 500) + '...'
+    })
+  }
+
   if (!guid) return
 
   const pending = pendingRequests.value.get(guid)
@@ -258,8 +264,10 @@ function handleResponse(response: NodeObject) {
         clearTimeout(pending.timeout)
         pendingRequests.value.delete(guid)
         
-        const error = response.error || response.Error || 'Request failed'
-        pending.reject(new Error(error))
+        const errorMessage = (response as any).error || (response as any).Error || 'Request failed'
+        const error = new Error(errorMessage)
+        ;(error as any).response = response
+        pending.reject(error)
       }
       break
 
@@ -311,8 +319,6 @@ function emitToSubscribers(event: string, data: any) {
 
 // Re-subscribe to all active subscriptions
 function resubscribeAll(socket: Socket) {
-  const authStore = useAuthStore()
-  
   // Re-subscribe to events that require it
   subscriptions.value.forEach((callbacks, event) => {
     if (callbacks.size > 0) {
@@ -322,11 +328,10 @@ function resubscribeAll(socket: Socket) {
       
       if (config?.Subscription) {
         // Send subscription request
-        const request: NodeObject = {
-          event: nodeEvent,
+        const request: any = {
+          Event: nodeEvent,
           SubmitType: SubmitType.Request,
-          guid: generateGuid(),
-          login: authStore.currentToken || undefined,
+          Guid: generateGuid(),
           [nodeEvent]: { subscribe: true }
         }
         

@@ -149,6 +149,15 @@ Recreate DigifyOld with modern Vue 3/Vuetify 3/TypeScript/Composition API archit
   - Solution: Use "NewObject" as the single socket event name (not individual NodeEvent names)
   - Proper NodeObject structure with capital letters (Event, Guid, SubmitType)
   - Correct API endpoint paths (/public/login/login instead of /Cloud/customer/loginnew/login)
+- ✅ FIXED: Missing domain information in login requests
+  - Solution: Created domain utilities to handle localhost/debug scenarios
+  - All login methods now include domain, SessionID, and UserAgent
+  - SessionID is generated and persisted in localStorage
+- ✅ ADDED: Debug mode for login failures
+  - Added clickable bug icon in login screen footer
+  - Shows full request/response data in a <pre> tag
+  - Captures error details, stack traces, and server responses
+  - Enhanced error objects with full context for debugging
 
 ## Current Status
 - Application foundation is complete and working without errors

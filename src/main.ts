@@ -39,7 +39,7 @@ async function initializeApp() {
   const app = createApp(App)
 
   // Error handling
-  app.config.errorHandler = (err, instance, info) => {
+  app.config.errorHandler = (err, _instance, info) => {
     logError(err as Error, `Vue [${info}]`)
   }
 

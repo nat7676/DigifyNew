@@ -8,6 +8,7 @@ import { ref, computed } from 'vue'
 import type { Router } from 'vue-router'
 import type { AccessTokenInterface, UserInfo } from '@/types/shared'
 import { useSystemStore } from './system'
+import { NodeEvent } from '@/modules/shared/shared'
 import authService from '@/services/auth.service'
 import socketService from '@/services/socket.service'
 
@@ -147,7 +148,7 @@ export const useAuthStore = defineStore('auth', () => {
       setToken(newToken.systemid, newToken)
       
       // Update socket authentication
-      await socketService.sendRequest('AccessToken', {
+      await socketService.sendRequest(NodeEvent.AccessToken, {
         AccessToken: newToken.AccessToken,
         LatestChatMsg: new Date(),
         SessionID: newToken.SessionID
@@ -168,7 +169,7 @@ export const useAuthStore = defineStore('auth', () => {
       setToken(token.systemid, token)
 
       // Send AccessToken to all socket servers for authentication
-      await socketService.sendRequest('AccessToken', {
+      await socketService.sendRequest(NodeEvent.AccessToken, {
         AccessToken: token.AccessToken,
         LatestChatMsg: new Date(),
         SessionID: token.SessionID
@@ -232,10 +233,7 @@ export const useAuthStore = defineStore('auth', () => {
     const token = accessTokens.value[systemId]
     
     if (token) {
-      // Configure axios header for new system
-      if (axios.defaults.headers) {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token.AccessToken}`
-      }
+      // Socket service handles auth headers internally
     } else {
       // Need to get token for this system
       // TODO: Implement system switch API call

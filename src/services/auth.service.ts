@@ -7,22 +7,10 @@
 import socketService from './socket.service'
 import type { AccessTokenInterface } from '@/types/shared'
 import { NodeEvent } from '@/modules/shared/shared'
+import { getDomain } from '@/utils/domain'
+import { v4 as uuidv4 } from 'uuid'
 
-interface LoginResponse {
-  tables?: Array<{
-    rows: Array<{
-      AccessToken?: string
-      systemid?: number
-      userid?: number
-      PortalID?: number
-      AccessLevelID?: number
-      roles?: { [RoleID: number]: boolean }
-      expire?: number
-      SessionID?: string
-      error?: string
-    }>
-  }>
-}
+// LoginResponse interface commented out - using direct response handling
 
 interface ApiRequest {
   path: string
@@ -37,46 +25,79 @@ interface ApiRequest {
 
 class AuthService {
   /**
+   * Get or create a session ID
+   */
+  private getOrCreateSessionId(): string {
+    let sessionId = localStorage.getItem('SessionID')
+    if (!sessionId) {
+      sessionId = uuidv4()
+      localStorage.setItem('SessionID', sessionId)
+    }
+    return sessionId as string
+  }
+  /**
    * Execute API request through socket.io
    */
   private async executeApiRequest(request: ApiRequest): Promise<any> {
-    const response = await socketService.sendRequest<any>(
-      NodeEvent.Api,
-      request
-    )
-    
-    // Handle the SQL response format
-    if (response.ApiResp?.tables && response.ApiResp.tables.length > 0) {
-      const firstTable = response.ApiResp.tables[0]
-      if (firstTable.rows && firstTable.rows.length > 0) {
-        return firstTable.rows[0]
+    try {
+      const response = await socketService.sendRequest<any>(
+        NodeEvent.Api,
+        request
+      )
+      
+      // Handle the SQL response format
+      if (response.ApiResp?.tables && response.ApiResp.tables.length > 0) {
+        const firstTable = response.ApiResp.tables[0]
+        if (firstTable.rows && firstTable.rows.length > 0) {
+          return firstTable.rows[0]
+        }
       }
+      
+      // Include full response in error for debugging
+      const error = new Error('Invalid response format')
+      ;(error as any).response = response
+      ;(error as any).request = request
+      throw error
+    } catch (error: any) {
+      // Enhance error with request details
+      error.request = request
+      throw error
     }
-    
-    throw new Error('Invalid response format')
   }
 
   /**
    * Login with mobile number and password
    */
   async login(mobile: string, password: string): Promise<AccessTokenInterface> {
-    const response = await this.executeApiRequest({
+    const loginRequest = {
       path: '/public/login/login',
       data: {
         username: mobile, // The API uses 'username' field
-        password: password
+        password: password,
+        domain: getDomain(),
+        contextId: 0, // Will be updated from system store when available
+        SessionID: this.getOrCreateSessionId(),
+        UserAgent: navigator.userAgent
       },
       settings: {
         sensitivecontent: true // Don't log passwords
       }
-    })
+    }
+    
+    const response = await this.executeApiRequest(loginRequest)
     
     if (response.error) {
-      throw new Error(response.error)
+      const error = new Error(response.error)
+      ;(error as any).response = response
+      ;(error as any).request = loginRequest
+      throw error
     }
     
     if (!response.AccessToken) {
-      throw new Error('No token received from server')
+      const error = new Error('No token received from server')
+      ;(error as any).response = response
+      ;(error as any).request = loginRequest
+      throw error
     }
 
     // Build AccessTokenInterface from response
@@ -88,6 +109,7 @@ class AuthService {
       AccessLevelID: response.AccessLevelID,
       roles: response.roles || {},
       expire: response.expire,
+      expiredate: response.expire ? new Date(response.expire) : new Date(),
       SessionID: response.SessionID
     }
   }
@@ -99,7 +121,8 @@ class AuthService {
     const response = await this.executeApiRequest({
       path: '/public/magicalcode',
       data: {
-        mobile: mobile
+        mobile: mobile,
+        domain: getDomain()
       },
       settings: {}
     })
@@ -117,8 +140,13 @@ class AuthService {
       path: '/Cloud/customer/loginnew/loginWithMagicCode',
       data: {
         mobile: mobile,
-        code: code
-      }
+        code: code,
+        domain: getDomain(),
+        contextId: 0,
+        SessionID: this.getOrCreateSessionId(),
+        UserAgent: navigator.userAgent
+      },
+      settings: {}
     })
     
     if (response.error) {
@@ -137,6 +165,7 @@ class AuthService {
       AccessLevelID: response.AccessLevelID,
       roles: response.roles || {},
       expire: response.expire,
+      expiredate: response.expire ? new Date(response.expire) : new Date(),
       SessionID: response.SessionID
     }
   }
@@ -149,8 +178,13 @@ class AuthService {
       path: '/Cloud/customer/loginnew/microsoftLogin',
       data: {
         msToken: msToken,
-        account: account
-      }
+        account: account,
+        domain: getDomain(),
+        contextId: 0,
+        SessionID: this.getOrCreateSessionId(),
+        UserAgent: navigator.userAgent
+      },
+      settings: {}
     })
     
     if (response.error) {
@@ -169,6 +203,7 @@ class AuthService {
       AccessLevelID: response.AccessLevelID,
       roles: response.roles || {},
       expire: response.expire,
+      expiredate: response.expire ? new Date(response.expire) : new Date(),
       SessionID: response.SessionID
     }
   }
@@ -201,6 +236,7 @@ class AuthService {
       AccessLevelID: response.AccessLevelID,
       roles: response.roles || {},
       expire: response.expire,
+      expiredate: response.expire ? new Date(response.expire) : new Date(),
       SessionID: response.SessionID
     }
   }
@@ -213,7 +249,8 @@ class AuthService {
       path: '/Cloud/customer/loginnew/validateToken',
       data: {
         token: token
-      }
+      },
+      settings: {}
     })
     
     return response.valid || false
@@ -241,7 +278,8 @@ class AuthService {
       data: {
         systemId: systemId,
         token: token
-      }
+      },
+      settings: {}
     })
     
     if (response.error) {
@@ -260,6 +298,7 @@ class AuthService {
       AccessLevelID: response.AccessLevelID,
       roles: response.roles || {},
       expire: response.expire,
+      expiredate: response.expire ? new Date(response.expire) : new Date(),
       SessionID: response.SessionID
     }
   }

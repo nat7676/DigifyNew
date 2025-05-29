@@ -7,11 +7,7 @@ import socketService from './socket.service'
 import { sha256 } from 'js-sha256'
 import type { NodeEvent } from '@/modules/shared/shared'
 
-interface TemplateCacheRequest {
-  path: string
-  domain: string
-  uniqueKeys: string[]
-}
+// TemplateCacheRequest interface - currently not used
 
 interface TemplateCachePortal {
   UniqueKey: string

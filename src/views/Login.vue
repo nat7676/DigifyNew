@@ -116,7 +116,31 @@
             >
               Forgot Password?
             </v-btn>
+            <v-spacer />
+            <v-btn
+              icon
+              size="small"
+              @click="showDebug = !showDebug"
+              :color="showDebug ? 'primary' : undefined"
+            >
+              <v-icon>mdi-bug</v-icon>
+            </v-btn>
           </v-card-actions>
+          
+          <!-- Debug Panel -->
+          <v-expand-transition>
+            <v-card-text v-if="showDebug" class="pa-4 bg-grey-lighten-4">
+              <div class="text-caption mb-2">Debug Response:</div>
+              <pre 
+                v-if="debugResponse" 
+                class="text-caption overflow-auto" 
+                style="max-height: 300px; background: white; padding: 8px; border-radius: 4px;"
+              >{{ JSON.stringify(debugResponse, null, 2) }}</pre>
+              <div v-else class="text-caption text-medium-emphasis">
+                No response data yet
+              </div>
+            </v-card-text>
+          </v-expand-transition>
         </v-card>
       </v-col>
     </v-row>
@@ -142,6 +166,10 @@ const password = ref('')
 const showPassword = ref(false)
 const rememberMe = ref(false)
 const loading = ref(false)
+
+// Debug state
+const showDebug = ref(false)
+const debugResponse = ref<any>(null)
 
 // Error state
 const errors = ref<{
@@ -186,8 +214,25 @@ const handleLogin = async () => {
     }
 
     uiStore.showSuccess('Welcome back!')
+    
+    // Clear debug on success
+    debugResponse.value = null
   } catch (error: any) {
     console.error('Login failed:', error)
+    
+    // Store debug response
+    debugResponse.value = {
+      error: error.message || 'Unknown error',
+      timestamp: new Date().toISOString(),
+      request: {
+        mobile: mobile.value,
+        domain: window.location.hostname,
+        url: window.location.href,
+        userAgent: navigator.userAgent
+      },
+      response: error.response || error,
+      stack: error.stack
+    }
     
     // Handle specific error cases
     if (error.response?.status === 401) {
@@ -195,7 +240,7 @@ const handleLogin = async () => {
     } else if (error.response?.status === 429) {
       errors.value.mobile = 'Too many attempts. Please try again later.'
     } else {
-      uiStore.showError('Login failed. Please try again.')
+      uiStore.showError(error.message || 'Login failed. Please try again.')
     }
   } finally {
     loading.value = false
