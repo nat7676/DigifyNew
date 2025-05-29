@@ -110,6 +110,12 @@ export const useSystemStore = defineStore('system', () => {
     }
   }
 
+  const setCurrentSystemId = (systemId: number) => {
+    currentSystemId.value = systemId
+    // Also add to available systems if not already there
+    addAvailableSystem(systemId)
+  }
+
   const setServerUrl = (url: string) => {
     serverUrl.value = url
     localStorage.setItem('serverUrl', url)
@@ -167,6 +173,7 @@ export const useSystemStore = defineStore('system', () => {
     saveDomainSettings,
     loadSystemInfo,
     switchSystem,
+    setCurrentSystemId,
     addAvailableSystem,
     setServerUrl,
     setOnlineStatus,

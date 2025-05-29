@@ -46,6 +46,14 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/insight/dashboard',
+    name: 'insight-dashboard',
+    component: () => import('@/views/InsightDashboard.vue'),
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: () => import('@/views/NotFound.vue'),

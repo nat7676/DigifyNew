@@ -5,21 +5,12 @@
 
 import socketService from './socket.service'
 import { sha256 } from 'js-sha256'
-import type { NodeEvent } from '@/modules/shared/shared'
-
-// TemplateCacheRequest interface - currently not used
-
-interface TemplateCachePortal {
-  UniqueKey: string
-  SettingsJson: string
-  PortalID: number
-  CSS: string
-}
-
-interface TemplateCacheLayout {
-  UniqueKey: string
-  Content: string
-}
+import { NodeEvent } from '@/modules/shared/shared'
+import type { 
+  TemplateCacheType,
+  TemplateCachePortal,
+  TemplateCacheLayout
+} from '@/modules/shared/shared'
 
 interface TemplateCacheResponse {
   TemplateCachePortal?: TemplateCachePortal[]
@@ -42,13 +33,15 @@ class TemplateService {
     }
 
     try {
+      const request: TemplateCacheType = {
+        path: 'portal',
+        domain: domain,
+        uniqueKeys: []
+      }
+      
       const response = await socketService.sendRequest<TemplateCacheResponse>(
-        'TemplateCache' as NodeEvent,
-        {
-          path: 'portal',
-          domain: domain,
-          uniqueKeys: []
-        }
+        NodeEvent.TemplateCache,
+        request
       )
 
       if (response.TemplateCachePortal && response.TemplateCachePortal.length > 0) {
@@ -90,13 +83,15 @@ class TemplateService {
     }
 
     try {
+      const request: TemplateCacheType = {
+        path: 'layout',
+        domain: '', // Not needed for layouts
+        uniqueKeys: uniqueKeys
+      }
+      
       const response = await socketService.sendRequest<TemplateCacheResponse>(
-        'TemplateCache' as NodeEvent,
-        {
-          path: 'layout',
-          domain: '', // Not needed for layouts
-          uniqueKeys: uniqueKeys
-        }
+        NodeEvent.TemplateCache,
+        request
       )
 
       if (response.TemplateCacheLayout && response.TemplateCacheLayout.length > 0) {
@@ -149,7 +144,7 @@ class TemplateService {
     }
 
     // Store layout via API
-    await socketService.sendRequest('Api' as NodeEvent, {
+    await socketService.sendRequest(NodeEvent.Api, {
       path: '/Module/Layout/Store',
       data: {
         uniqueKey: uniqueKey,
@@ -167,7 +162,7 @@ class TemplateService {
    * Save portal settings
    */
   async savePortalSettings(domain: string, settings: any): Promise<void> {
-    await socketService.sendRequest('Api' as NodeEvent, {
+    await socketService.sendRequest(NodeEvent.Api, {
       path: '/Module/portal/save',
       data: {
         domain: domain,
@@ -184,7 +179,7 @@ class TemplateService {
    * Reset template cache on server
    */
   async resetTemplateCache(): Promise<void> {
-    await socketService.sendRequest('TemplateCacheReset' as NodeEvent, {})
+    await socketService.sendRequest(NodeEvent.TemplateCacheReset, {})
     this.clearCache()
   }
 
