@@ -8,6 +8,7 @@ import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import type { NodeObject } from '@/modules/shared/shared'
 import { NodeEvent, SubmitType, eventconfig } from '@/modules/shared/shared'
+import { logRequest, logResponse, logError, logConnection } from '@/utils/logger'
 
 // Socket state
 const sockets = ref<Socket[]>([])
@@ -24,6 +25,7 @@ interface PendingRequest {
   resolve: (value: any) => void
   reject: (reason?: any) => void
   timeout: number
+  startTime?: number
 }
 
 const pendingRequests = ref<Map<string, PendingRequest>>(new Map())
@@ -80,7 +82,7 @@ export function initializeSockets() {
 
     // Connection event handlers
     socket.on('connect', () => {
-      console.log(`Connected to ${url}`)
+      logConnection('connected', url)
       isConnected.value = true
       reconnectAttempts.value = 0
       
@@ -95,12 +97,12 @@ export function initializeSockets() {
     })
 
     socket.on('disconnect', (reason) => {
-      console.log(`Disconnected from ${url}: ${reason}`)
+      logConnection('disconnected', url, { reason })
       checkAllDisconnected()
     })
 
     socket.on('connect_error', (error) => {
-      console.error(`Connection error to ${url}:`, error.message)
+      logConnection('error', url, { error: error.message })
       reconnectAttempts.value++
     })
 
@@ -217,6 +219,13 @@ export async function sendRequest<T = any>(
     })
   })
 
+  // Log the request
+  const startTime = Date.now()
+  logRequest(event, guid, request)
+  
+  // Store start time for response timing
+  pendingRequests.value.get(guid)!.startTime = startTime
+
   // Send request using NewObject event
   socket.emit(NodeEvent.NewObject, request)
 
@@ -227,19 +236,10 @@ export async function sendRequest<T = any>(
 function handleResponse(response: NodeObject) {
   const { Guid: guid, SubmitType: submitType, Event: event } = response
 
-  // Debug logging for development
-  if (import.meta.env.DEV) {
-    console.log('Socket response:', {
-      event,
-      guid,
-      submitType,
-      response: JSON.stringify(response).substring(0, 500) + '...'
-    })
-  }
-
   if (!guid) return
 
   const pending = pendingRequests.value.get(guid)
+  const timeMs = pending?.startTime ? Date.now() - pending.startTime : 0
   
   // Handle different response types
   switch (submitType) {
@@ -250,10 +250,14 @@ function handleResponse(response: NodeObject) {
         clearTimeout(pending.timeout)
         pendingRequests.value.delete(guid)
         
+        // Log successful response
+        logResponse(event, guid, response, timeMs)
+        
         // Extract event-specific data - the response is in the event field
         pending.resolve(response)
       } else {
         // Server-initiated event (not a response to our request)
+        logResponse(event, guid, response, 0)
         emitToSubscribers(event, response)
       }
       break
@@ -267,6 +271,10 @@ function handleResponse(response: NodeObject) {
         const errorMessage = (response as any).error || (response as any).Error || 'Request failed'
         const error = new Error(errorMessage)
         ;(error as any).response = response
+        
+        // Log error
+        logError(event, guid, error, timeMs)
+        
         pending.reject(error)
       }
       break
