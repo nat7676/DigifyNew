@@ -29,17 +29,22 @@ class TemplateService {
   async getPortalSettings(domain: string): Promise<TemplateCachePortal | null> {
     const cacheKey = `portal:${domain}`
     
+    console.log('Getting portal settings for domain:', domain)
+    
     // Check cache first
     if (templateCache.has(cacheKey)) {
+      console.log('Found portal settings in cache')
       return templateCache.get(cacheKey)
     }
 
     try {
       const request: TemplateCacheType = {
         path: 'portal',
-        domain: '', // Should be empty string according to old implementation
+        domain: domain, // Portal requests need the domain
         uniqueKeys: []
       }
+      
+      console.log('Sending portal request:', request)
       
       const response = await socketService.sendRequest<any>(
         NodeEvent.TemplateCache,
@@ -48,19 +53,40 @@ class TemplateService {
 
       console.log('Full portal response:', response)
       
-      // The actual data might be in response.TemplateCacheResp
-      const templateData = response.TemplateCacheResp || response
+      // The actual data might be in response.TemplateCacheResp or response.TemplateCachePortal
+      const templateData = response.TemplateCacheResp || response.TemplateCachePortal || response
 
-      if (templateData && Array.isArray(templateData) && templateData.length > 0) {
-        const portal = templateData[0]
-        templateCache.set(cacheKey, portal)
+      console.log('Template data:', templateData)
+
+      // Handle both array and single object responses
+      if (templateData) {
+        let portal = null
         
-        // Store the portal unique key for layout requests
-        portalUniqueKey = portal.UniqueKey
-        console.log('Stored portal UniqueKey:', portalUniqueKey)
-        console.log('Portal data:', portal)
+        if (Array.isArray(templateData) && templateData.length > 0) {
+          portal = templateData[0]
+        } else if (typeof templateData === 'object' && !Array.isArray(templateData) && templateData.UniqueKey) {
+          portal = templateData
+        }
         
-        return portal
+        if (portal) {
+          templateCache.set(cacheKey, portal)
+          
+          // Store the portal unique key for layout requests
+          portalUniqueKey = portal.UniqueKey
+          console.log('Stored portal UniqueKey:', portalUniqueKey)
+          console.log('Portal data:', portal)
+          
+          return portal
+        }
+      }
+      
+      console.log('No valid portal data found in response')
+      
+      // If localhost, try with a default domain
+      if (domain === 'localhost' && !templateCache.has(cacheKey + ':tried-default')) {
+        console.log('Trying with default domain for localhost...')
+        templateCache.set(cacheKey + ':tried-default', true)
+        return this.getPortalSettings('digify.no')
       }
 
       return null

@@ -216,18 +216,23 @@ const loadDashboardData = async () => {
     const portalSettings = await templateService.getPortalSettings(domain)
     console.log('Portal settings:', portalSettings)
     
-    if (portalSettings) {
-      // Get dashboard layout for insight dashboard
-      const layout = await templateService.getDashboardLayout(
-        'insightDashboard', // layout type
-        contextId.value || undefined, // system unique key (contextId)
-        undefined // object ID
-      )
-      console.log('Dashboard layout:', layout)
-      
-      if (layout) {
-        dashboardData.value = layout
-      }
+    // Try to ensure we have the system unique key
+    const systemUniqueKey = templateService.getSystemUniqueKey()
+    console.log('Current system unique key:', systemUniqueKey)
+    
+    // Get dashboard layout for insight dashboard
+    // Note: We should use the UniqueSystemKey, not the contextId directly
+    const layout = await templateService.getDashboardLayout(
+      'insightDashboard', // layout type
+      systemUniqueKey || undefined, // system unique key (NOT contextId)
+      undefined // object ID
+    )
+    console.log('Dashboard layout:', layout)
+    
+    if (layout) {
+      dashboardData.value = layout
+    } else {
+      console.log('No layout found, using default dashboard data')
     }
     
     // If we have a contextId, we might need to switch system context
