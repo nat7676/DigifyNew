@@ -19,9 +19,9 @@
               class="mb-4"
             >
               <v-img
-                v-if="user?.profileImage"
-                :src="user.profileImage"
-                :alt="user.name"
+                v-if="userProfile?.ProfileImage"
+                :src="userProfile.ProfileImage"
+                :alt="userProfile.Name"
               />
               <v-icon
                 v-else
@@ -30,17 +30,31 @@
                 mdi-account-circle
               </v-icon>
             </v-avatar>
-            <h2 class="text-h5 mb-2">{{ user?.name || 'User' }}</h2>
-            <p class="text-body-2 text-medium-emphasis">{{ user?.email || 'No email' }}</p>
+            <h2 class="text-h5 mb-2">{{ userProfile?.Name || 'User' }}</h2>
+            <p class="text-body-2 text-medium-emphasis">{{ userProfile?.Email || 'No email' }}</p>
             <v-chip
               class="mt-2"
               color="primary"
               label
               size="small"
             >
-              User ID: {{ user?.userid || 'N/A' }}
+              Tel: {{ userProfile?.Tel || currentToken?.userid || 'N/A' }}
             </v-chip>
           </v-card-text>
+          
+          <v-divider />
+          
+          <v-card-actions>
+            <v-btn
+              block
+              variant="tonal"
+              @click="fetchUserData"
+              :loading="loading"
+            >
+              <v-icon start>mdi-refresh</v-icon>
+              Refresh User Data
+            </v-btn>
+          </v-card-actions>
         </v-card>
       </v-col>
 
@@ -48,38 +62,140 @@
         cols="12"
         md="8"
       >
-        <!-- Profile Details -->
-        <v-card>
-          <v-card-title>Profile Information</v-card-title>
+        <!-- User Information -->
+        <v-card class="mb-4">
+          <v-card-title>User Information</v-card-title>
           <v-divider />
           <v-card-text>
-            <p class="text-body-1 mb-4">
-              This is a placeholder profile page. Profile editing functionality will be implemented here.
-            </p>
-            
-            <v-list>
+            <v-list density="compact">
+              <v-list-item>
+                <v-list-item-title>Phone Number</v-list-item-title>
+                <template #append>
+                  <span class="text-body-2 font-weight-medium">{{ userProfile?.Tel || 'N/A' }}</span>
+                </template>
+              </v-list-item>
+              <v-list-item>
+                <v-list-item-title>First Name</v-list-item-title>
+                <template #append>
+                  <span class="text-body-2">{{ userProfile?.FirstName || 'N/A' }}</span>
+                </template>
+              </v-list-item>
+              <v-list-item>
+                <v-list-item-title>Email</v-list-item-title>
+                <template #append>
+                  <span class="text-body-2">{{ userProfile?.Email || 'N/A' }}</span>
+                </template>
+              </v-list-item>
+              <v-list-item v-if="userData">
+                <v-list-item-title>Unique User Key</v-list-item-title>
+                <template #append>
+                  <span class="text-body-2 text-truncate" style="max-width: 200px">{{ userData.UniqueUserKey || 'N/A' }}</span>
+                </template>
+              </v-list-item>
+            </v-list>
+          </v-card-text>
+        </v-card>
+
+        <!-- System Information -->
+        <v-card class="mb-4">
+          <v-card-title>System Information</v-card-title>
+          <v-divider />
+          <v-card-text>
+            <v-list density="compact">
               <v-list-item>
                 <v-list-item-title>System ID</v-list-item-title>
                 <template #append>
-                  <span class="text-body-2">{{ user?.systemid || 'N/A' }}</span>
+                  <span class="text-body-2 font-weight-medium">{{ currentToken?.systemid || 'N/A' }}</span>
                 </template>
               </v-list-item>
+              <v-list-item>
+                <v-list-item-title>Active System ID</v-list-item-title>
+                <template #append>
+                  <span class="text-body-2">{{ userProfile?.ActiveSystemID || 'N/A' }}</span>
+                </template>
+              </v-list-item>
+              <v-list-item v-if="userData">
+                <v-list-item-title>Unique System Key</v-list-item-title>
+                <template #append>
+                  <span class="text-body-2 text-truncate" style="max-width: 200px">{{ userData.UniqueSystemKey || 'N/A' }}</span>
+                </template>
+              </v-list-item>
+              <v-list-item v-if="userData">
+                <v-list-item-title>System Name</v-list-item-title>
+                <template #append>
+                  <span class="text-body-2">{{ userData.SystemName || 'N/A' }}</span>
+                </template>
+              </v-list-item>
+            </v-list>
+          </v-card-text>
+        </v-card>
+
+        <!-- Portal Information -->
+        <v-card class="mb-4">
+          <v-card-title>Portal Information</v-card-title>
+          <v-divider />
+          <v-card-text>
+            <v-list density="compact">
               <v-list-item>
                 <v-list-item-title>Portal ID</v-list-item-title>
                 <template #append>
-                  <span class="text-body-2">{{ user?.PortalID || 'N/A' }}</span>
+                  <span class="text-body-2 font-weight-medium">{{ currentToken?.PortalID || 'N/A' }}</span>
+                </template>
+              </v-list-item>
+              <v-list-item v-if="portalSettings">
+                <v-list-item-title>Portal Unique Key</v-list-item-title>
+                <template #append>
+                  <span class="text-body-2 text-truncate" style="max-width: 200px">{{ portalSettings.UniqueKey || 'N/A' }}</span>
                 </template>
               </v-list-item>
               <v-list-item>
-                <v-list-item-title>Access Level</v-list-item-title>
+                <v-list-item-title>Domain</v-list-item-title>
                 <template #append>
-                  <span class="text-body-2">{{ user?.AccessLevelID || 'N/A' }}</span>
+                  <span class="text-body-2">{{ window.location.hostname }}</span>
+                </template>
+              </v-list-item>
+            </v-list>
+          </v-card-text>
+        </v-card>
+
+        <!-- Access & Roles -->
+        <v-card>
+          <v-card-title>Access & Roles</v-card-title>
+          <v-divider />
+          <v-card-text>
+            <v-list density="compact">
+              <v-list-item>
+                <v-list-item-title>Access Level ID</v-list-item-title>
+                <template #append>
+                  <span class="text-body-2 font-weight-medium">{{ currentToken?.AccessLevelID || 'N/A' }}</span>
                 </template>
               </v-list-item>
               <v-list-item>
-                <v-list-item-title>Roles</v-list-item-title>
+                <v-list-item-title>Session ID</v-list-item-title>
                 <template #append>
-                  <span class="text-body-2">{{ rolesList }}</span>
+                  <span class="text-body-2">{{ currentToken?.SessionID || 'N/A' }}</span>
+                </template>
+              </v-list-item>
+              <v-list-item>
+                <v-list-item-title>Token Expires</v-list-item-title>
+                <template #append>
+                  <span class="text-body-2">{{ tokenExpiry }}</span>
+                </template>
+              </v-list-item>
+              <v-list-item>
+                <v-list-item-title>Active Roles</v-list-item-title>
+                <template #append>
+                  <div>
+                    <v-chip
+                      v-for="role in activeRoles"
+                      :key="role"
+                      size="x-small"
+                      class="ml-1"
+                      color="primary"
+                    >
+                      {{ role }}
+                    </v-chip>
+                  </div>
                 </template>
               </v-list-item>
             </v-list>
@@ -87,22 +203,130 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <!-- Debug Info -->
+    <v-row v-if="showDebug" class="mt-4">
+      <v-col cols="12">
+        <v-expansion-panels>
+          <v-expansion-panel>
+            <v-expansion-panel-title>Debug Information</v-expansion-panel-title>
+            <v-expansion-panel-text>
+              <pre>{{ debugInfo }}</pre>
+            </v-expansion-panel-text>
+          </v-expansion-panel>
+        </v-expansion-panels>
+      </v-col>
+    </v-row>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useSystemStore } from '@/stores/system'
+import socketService from '@/services/socket.service'
+import templateService from '@/services/template.service'
+import { NodeEvent } from '@/modules/shared/shared'
 
 const authStore = useAuthStore()
+const systemStore = useSystemStore()
 
-const user = computed(() => authStore.user)
+// State
+const loading = ref(false)
+const userData = ref<any>(null)
+const portalSettings = ref<any>(null)
+const showDebug = ref(false)
 
-const rolesList = computed(() => {
-  if (!user.value?.roles) return 'None'
-  return Object.entries(user.value.roles)
+// Computed
+const currentToken = computed(() => authStore.currentToken)
+const userProfile = computed(() => currentToken.value?.userProfile)
+
+const activeRoles = computed(() => {
+  if (!currentToken.value?.roles) return []
+  return Object.entries(currentToken.value.roles)
     .filter(([_, hasRole]) => hasRole)
-    .map(([roleId]) => `Role ${roleId}`)
-    .join(', ')
+    .map(([roleId]) => {
+      const roleNames: Record<string, string> = {
+        '1': 'Super Admin',
+        '2': 'Designer',
+        '3': 'Developer',
+        '4': 'Role Admin',
+        '10': 'System Admin'
+      }
+      return roleNames[roleId] || `Role ${roleId}`
+    })
+})
+
+const tokenExpiry = computed(() => {
+  if (!currentToken.value?.expiredate) return 'N/A'
+  const date = new Date(currentToken.value.expiredate)
+  return date.toLocaleString()
+})
+
+const debugInfo = computed(() => {
+  return JSON.stringify({
+    currentToken: currentToken.value,
+    userData: userData.value,
+    portalSettings: portalSettings.value,
+    templatePortalKey: templateService.getPortalUniqueKey(),
+    templateSystemKey: templateService.getSystemUniqueKey()
+  }, null, 2)
+})
+
+// Methods
+const fetchUserData = async () => {
+  loading.value = true
+  try {
+    // Fetch current user data from API
+    const response = await socketService.sendRequest(NodeEvent.Api, {
+      path: '/Cloud/customer/user/UserCurrentGet',
+      data: {}
+    })
+    
+    console.log('User data response:', response)
+    
+    if (response.ApiResp?.result?.length > 0) {
+      userData.value = response.ApiResp.result[0]
+      
+      // Store the UniqueSystemKey in template service for layout generation
+      if (userData.value.UniqueSystemKey) {
+        templateService.setSystemUniqueKey(userData.value.UniqueSystemKey)
+        console.log('Set system unique key:', userData.value.UniqueSystemKey)
+      }
+    }
+  } catch (error) {
+    console.error('Failed to fetch user data:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const fetchPortalSettings = async () => {
+  try {
+    const domain = window.location.hostname
+    const settings = await templateService.getPortalSettings(domain)
+    if (settings) {
+      portalSettings.value = settings
+      console.log('Portal settings:', settings)
+    }
+  } catch (error) {
+    console.error('Failed to fetch portal settings:', error)
+  }
+}
+
+// Lifecycle
+onMounted(async () => {
+  // Toggle debug mode with keyboard shortcut
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+      showDebug.value = !showDebug.value
+    }
+  })
+  
+  // Fetch data on mount
+  await Promise.all([
+    fetchUserData(),
+    fetchPortalSettings()
+  ])
 })
 </script>

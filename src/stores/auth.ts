@@ -83,7 +83,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const setToken = (systemId: number, token: AccessTokenInterface) => {
+  const setToken = async (systemId: number, token: AccessTokenInterface) => {
     console.log('Setting token for system:', systemId, token)
     currentSystemId.value = systemId
     accessTokens.value[systemId] = token
@@ -96,6 +96,27 @@ export const useAuthStore = defineStore('auth', () => {
     
     console.log('Current system ID:', currentSystemId.value)
     console.log('Is authenticated after token set:', isAuthenticated.value)
+    
+    // Fetch user data to get UniqueSystemKey
+    try {
+      const response = await socketService.sendRequest(NodeEvent.Api, {
+        path: '/Cloud/customer/user/UserCurrentGet',
+        data: {}
+      })
+      
+      if (response.ApiResp?.result?.length > 0) {
+        const userData = response.ApiResp.result[0]
+        console.log('Fetched user data with UniqueSystemKey:', userData.UniqueSystemKey)
+        
+        // Store the UniqueSystemKey in template service
+        if (userData.UniqueSystemKey) {
+          const { default: templateService } = await import('@/services/template.service')
+          templateService.setSystemUniqueKey(userData.UniqueSystemKey)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch user data after login:', error)
+    }
     
     // Extract user info from token and profile
     user.value = {
@@ -150,8 +171,8 @@ export const useAuthStore = defineStore('auth', () => {
       // Call refresh token API
       const newToken = await authService.refreshToken(refreshTokenValue)
       
-      // Update token in store
-      setToken(newToken.systemid, newToken)
+      // Update token in store (this will also fetch user data)
+      await setToken(newToken.systemid, newToken)
       
       // Update socket authentication
       await socketService.sendRequest(NodeEvent.AccessToken, {
@@ -171,8 +192,8 @@ export const useAuthStore = defineStore('auth', () => {
       // Call real login API
       const token = await authService.login(mobile, password)
       
-      // Set token in store
-      setToken(token.systemid, token)
+      // Set token in store (this will also fetch user data)
+      await setToken(token.systemid, token)
 
       // Send AccessToken to all socket servers for authentication
       await socketService.sendRequest(NodeEvent.AccessToken, {

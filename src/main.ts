@@ -96,23 +96,10 @@ async function initializeApp() {
     setTimeout(async () => {
       if (socketService.isConnected.value) {
         try {
-          // First get portal settings to get the UniqueKey
-          const { default: templateService } = await import('./services/template.service')
-          const domain = window.location.hostname
-          const portalSettings = await templateService.getPortalSettings(domain)
-          console.log('Portal settings loaded:', portalSettings)
-          
-          // For testing, set some dummy unique keys to see the request format
-          templateService.setSystemUniqueKey('test_system_unique_key')
-          
-          // Small delay to ensure portal unique key is set
-          await new Promise(resolve => setTimeout(resolve, 100))
-          
-          // Try to load a layout - this should now have both portal and system keys
-          const layout = await templateService.getDashboardLayout('layout')
-          console.log('Layout response:', layout)
+          await systemStore.loadDomainSettings()
+          console.log('✅ Domain settings loaded')
         } catch (error) {
-          console.warn('Failed to load settings:', error)
+          console.warn('Failed to load domain settings:', error)
         }
       }
     }, 2000)
