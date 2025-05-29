@@ -1,6 +1,12 @@
 /**
  * Domain utilities
  * Handles domain extraction with special cases for localhost/debug
+ * 
+ * Default behavior:
+ * - localhost -> my.digify.no
+ * - Can be overridden using localStorage 'useportal' key
+ * 
+ * TODO: Implement debug UI to easily change domain for testing
  */
 
 /**
@@ -14,6 +20,9 @@ export function getDomain(): string {
     const useportal = localStorage.getItem('useportal')
     if (useportal) {
       domain = useportal
+    } else {
+      // Default domain for localhost
+      domain = 'my.digify.no'
     }
   }
 

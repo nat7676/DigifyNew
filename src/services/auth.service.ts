@@ -72,7 +72,7 @@ class AuthService {
     const loginRequest = {
       path: '/public/login/login',
       data: {
-        username: mobile, // The API uses 'username' field
+        mobile: mobile,
         password: password,
         domain: getDomain(),
         contextId: 0, // Will be updated from system store when available
