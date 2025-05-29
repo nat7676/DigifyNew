@@ -71,9 +71,6 @@ async function initializeApp() {
   const systemStore = useSystemStore()
   const uiStore = useUIStore()
 
-  // Set router instance in auth store
-  authStore.setRouterInstance(router)
-  
   // Set Vuetify instance in UI store
   uiStore.setVuetifyInstance(vuetify)
 

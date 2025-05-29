@@ -5,7 +5,6 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Router } from 'vue-router'
 import type { AccessTokenInterface, UserInfo } from '@/types/shared'
 import { useSystemStore } from './system'
 import { NodeEvent } from '@/modules/shared/shared'
@@ -14,9 +13,6 @@ import socketService from '@/services/socket.service'
 
 // Store the current systemId for token management
 let currentSystemId = 0
-
-// Router instance will be set during initialization
-let router: Router | null = null
 
 export const useAuthStore = defineStore('auth', () => {
   const systemStore = useSystemStore()
@@ -175,12 +171,8 @@ export const useAuthStore = defineStore('auth', () => {
         SessionID: token.SessionID
       })
 
-      // Navigate to redirect URL or dashboard
-      const destination = redirectUrl.value || '/dashboard'
+      // Clear any redirect URL
       redirectUrl.value = null
-      if (router) {
-        await router.push(destination)
-      }
     } catch (error: any) {
       console.error('Login failed:', error)
       throw error
@@ -260,9 +252,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const setRouterInstance = (routerInstance: Router) => {
-    router = routerInstance
-  }
 
   const initialize = async () => {
     // Load tokens from storage
@@ -300,7 +289,6 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Methods
     setRedirectUrl,
-    setRouterInstance,
     hasRole,
     hasAnyRole,
     login,

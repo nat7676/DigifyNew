@@ -217,6 +217,9 @@ const handleLogin = async () => {
     
     // Clear debug on success
     debugResponse.value = null
+    
+    // Navigate to dashboard
+    await router.push('/dashboard')
   } catch (error: any) {
     console.error('Login failed:', error)
     
