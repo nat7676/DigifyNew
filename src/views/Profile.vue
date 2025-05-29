@@ -151,7 +151,7 @@
               <v-list-item>
                 <v-list-item-title>Domain</v-list-item-title>
                 <template #append>
-                  <span class="text-body-2">{{ window.location.hostname }}</span>
+                  <span class="text-body-2">{{ currentDomain }}</span>
                 </template>
               </v-list-item>
             </v-list>
@@ -261,6 +261,10 @@ const tokenExpiry = computed(() => {
   if (!currentToken.value?.expiredate) return 'N/A'
   const date = new Date(currentToken.value.expiredate)
   return date.toLocaleString()
+})
+
+const currentDomain = computed(() => {
+  return window.location.hostname
 })
 
 const debugInfo = computed(() => {
