@@ -146,11 +146,11 @@ export function disconnect() {
 // Get active socket for requests
 function getActiveSocket(): Socket | null {
   // Try to find a connected socket
-  const connectedSocket = sockets.value.find(socket => (socket as any).connected === true)
-  if (connectedSocket) return connectedSocket
+  const connectedSocket = sockets.value.find(socket => socket.connected === true)
+  if (connectedSocket) return connectedSocket as Socket
 
   // If no sockets connected, return first one
-  return sockets.value[0] || null
+  return (sockets.value[0] as Socket) || null
 }
 
 // Wait for connection
@@ -196,8 +196,8 @@ export async function sendRequest<T = any>(
     [event]: data  // Event-specific data
   }
   
-  // Only add login if we have a token
-  if (authStore.currentToken) {
+  // Only add login if we have a token AND the event requires login
+  if (authStore.currentToken && config.LoginRequired) {
     request.login = authStore.currentToken
   }
 

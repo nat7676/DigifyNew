@@ -19,6 +19,8 @@ interface TemplateCacheResponse {
 
 // Cache storage
 const templateCache = new Map<string, any>()
+let portalUniqueKey: string | null = null
+let systemUniqueKey: string | null = null
 
 class TemplateService {
   /**
@@ -35,7 +37,7 @@ class TemplateService {
     try {
       const request: TemplateCacheType = {
         path: 'portal',
-        domain: domain,
+        domain: '', // Should be empty string according to old implementation
         uniqueKeys: []
       }
       
@@ -47,6 +49,10 @@ class TemplateService {
       if (response.TemplateCachePortal && response.TemplateCachePortal.length > 0) {
         const portal = response.TemplateCachePortal[0]
         templateCache.set(cacheKey, portal)
+        
+        // Store the portal unique key for layout requests
+        portalUniqueKey = portal.UniqueKey
+        
         return portal
       }
 
@@ -62,24 +68,27 @@ class TemplateService {
    */
   async getDashboardLayout(
     layoutType: string,
-    portalUniqueKey: string,
-    systemUniqueKey?: string,
+    useSystemKey?: string,
     objectId?: string
   ): Promise<any | null> {
     // Generate unique keys for different layout levels
     const uniqueKeys: string[] = []
     
-    // Global layout
-    uniqueKeys.push(sha256(portalUniqueKey + layoutType))
+    // Global layout - use stored portal unique key
+    if (portalUniqueKey) {
+      uniqueKeys.push(sha256(portalUniqueKey + '_' + layoutType))
+    }
     
     // System-specific layout
-    if (systemUniqueKey) {
-      uniqueKeys.push(sha256(systemUniqueKey + layoutType))
+    if (useSystemKey || systemUniqueKey) {
+      const sysKey = useSystemKey || systemUniqueKey || ''
+      uniqueKeys.push(sha256(sysKey + '_' + layoutType))
     }
     
     // Object-specific layout
-    if (systemUniqueKey && objectId) {
-      uniqueKeys.push(sha256(systemUniqueKey + layoutType + objectId))
+    if ((useSystemKey || systemUniqueKey) && objectId) {
+      const sysKey = useSystemKey || systemUniqueKey || ''
+      uniqueKeys.push(sha256(sysKey + '_' + layoutType + '_' + objectId))
     }
 
     try {
@@ -129,17 +138,17 @@ class TemplateService {
     
     switch (level) {
       case 'global':
-        uniqueKey = sha256(portalUniqueKey + layoutType)
+        uniqueKey = sha256(portalUniqueKey + '_' + layoutType)
         break
       case 'system':
         if (!systemUniqueKey) throw new Error('System unique key required for system level')
-        uniqueKey = sha256(systemUniqueKey + layoutType)
+        uniqueKey = sha256(systemUniqueKey + '_' + layoutType)
         break
       case 'object':
         if (!systemUniqueKey || !objectId) {
           throw new Error('System unique key and object ID required for object level')
         }
-        uniqueKey = sha256(systemUniqueKey + layoutType + objectId)
+        uniqueKey = sha256(systemUniqueKey + '_' + layoutType + '_' + objectId)
         break
     }
 
@@ -188,6 +197,27 @@ class TemplateService {
    */
   clearCache(): void {
     templateCache.clear()
+  }
+
+  /**
+   * Set the system unique key for layout generation
+   */
+  setSystemUniqueKey(key: string): void {
+    systemUniqueKey = key
+  }
+
+  /**
+   * Get the current portal unique key
+   */
+  getPortalUniqueKey(): string | null {
+    return portalUniqueKey
+  }
+
+  /**
+   * Get the current system unique key
+   */
+  getSystemUniqueKey(): string | null {
+    return systemUniqueKey
   }
 
   /**

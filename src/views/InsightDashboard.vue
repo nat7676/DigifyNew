@@ -220,7 +220,6 @@ const loadDashboardData = async () => {
       // Get dashboard layout for insight dashboard
       const layout = await templateService.getDashboardLayout(
         'insightDashboard', // layout type
-        portalSettings.UniqueKey, // portal unique key
         contextId.value || undefined, // system unique key (contextId)
         undefined // object ID
       )
