@@ -35,6 +35,43 @@ class AuthService {
     }
     return sessionId as string
   }
+
+  /**
+   * Decode the AccessToken to extract user information
+   * The token is base64 encoded JSON with a 32-character hash at the end
+   */
+  private decodeAccessToken(accessToken: string): Omit<AccessTokenInterface, 'AccessToken' | 'userProfile'> | null {
+    try {
+      // Decode base64
+      const decoded = atob(accessToken)
+      
+      // Remove the 32-character hash at the end
+      const json = decoded.substring(0, decoded.length - 32)
+      
+      // Parse JSON array and get first element
+      const tokenArray = JSON.parse(json)
+      if (!Array.isArray(tokenArray) || tokenArray.length === 0) {
+        return null
+      }
+      
+      const tokenData = tokenArray[0]
+      
+      // Convert expire timestamp to Date
+      return {
+        systemid: tokenData.systemid,
+        userid: tokenData.userid,
+        PortalID: tokenData.PortalID,
+        AccessLevelID: tokenData.AccessLevelID,
+        roles: tokenData.roles || {},
+        expire: tokenData.expire,
+        expiredate: new Date(tokenData.expire * 1000), // Convert seconds to milliseconds
+        SessionID: tokenData.rid || ''
+      }
+    } catch (error) {
+      console.error('Failed to decode AccessToken:', error)
+      return null
+    }
+  }
   /**
    * Execute API request through socket.io
    */
@@ -86,8 +123,17 @@ class AuthService {
     
     const response = await this.executeApiRequest(loginRequest)
     
+    // Check for error in response
     if (response.error) {
       const error = new Error(response.error)
+      ;(error as any).response = response
+      ;(error as any).request = loginRequest
+      throw error
+    }
+    
+    // Check StatusID
+    if (response.StatusID && response.StatusID !== 200) {
+      const error = new Error(response.StatusDescription || 'Login failed')
       ;(error as any).response = response
       ;(error as any).request = loginRequest
       throw error
@@ -100,18 +146,33 @@ class AuthService {
       throw error
     }
 
-    // Build AccessTokenInterface from response
-    return {
-      AccessToken: response.AccessToken,
-      systemid: response.systemid,
-      userid: response.userid,
-      PortalID: response.PortalID,
-      AccessLevelID: response.AccessLevelID,
-      roles: response.roles || {},
-      expire: response.expire,
-      expiredate: response.expire ? new Date(response.expire) : new Date(),
-      SessionID: response.SessionID
+    // Decode the AccessToken to get the token data
+    const tokenData = this.decodeAccessToken(response.AccessToken)
+    
+    if (!tokenData) {
+      const error = new Error('Invalid token format')
+      ;(error as any).response = response
+      ;(error as any).request = loginRequest
+      throw error
     }
+
+    // Build AccessTokenInterface from decoded token and add additional user info
+    const result = {
+      ...tokenData,
+      AccessToken: response.AccessToken,
+      // Add user profile information from response
+      userProfile: {
+        Tel: response.Tel,
+        Name: response.Name,
+        Email: response.Email,
+        FirstName: response.FirstName,
+        ProfileImage: response.ProfileImage,
+        ActiveSystemID: response.ActiveSystemID,
+        RefreshToken: response.RefreshToken
+      }
+    }
+    
+    return result
   }
 
   /**
@@ -157,16 +218,26 @@ class AuthService {
       throw new Error('No token received from server')
     }
 
+    // Decode the AccessToken to get the token data
+    const tokenData = this.decodeAccessToken(response.AccessToken)
+    
+    if (!tokenData) {
+      throw new Error('Invalid token format')
+    }
+
+    // Build AccessTokenInterface from decoded token and add additional user info
     return {
+      ...tokenData,
       AccessToken: response.AccessToken,
-      systemid: response.systemid,
-      userid: response.userid,
-      PortalID: response.PortalID,
-      AccessLevelID: response.AccessLevelID,
-      roles: response.roles || {},
-      expire: response.expire,
-      expiredate: response.expire ? new Date(response.expire) : new Date(),
-      SessionID: response.SessionID
+      userProfile: {
+        Tel: response.Tel,
+        Name: response.Name,
+        Email: response.Email,
+        FirstName: response.FirstName,
+        ProfileImage: response.ProfileImage,
+        ActiveSystemID: response.ActiveSystemID,
+        RefreshToken: response.RefreshToken
+      }
     }
   }
 
@@ -195,16 +266,26 @@ class AuthService {
       throw new Error('No token received from server')
     }
 
+    // Decode the AccessToken to get the token data
+    const tokenData = this.decodeAccessToken(response.AccessToken)
+    
+    if (!tokenData) {
+      throw new Error('Invalid token format')
+    }
+
+    // Build AccessTokenInterface from decoded token and add additional user info
     return {
+      ...tokenData,
       AccessToken: response.AccessToken,
-      systemid: response.systemid,
-      userid: response.userid,
-      PortalID: response.PortalID,
-      AccessLevelID: response.AccessLevelID,
-      roles: response.roles || {},
-      expire: response.expire,
-      expiredate: response.expire ? new Date(response.expire) : new Date(),
-      SessionID: response.SessionID
+      userProfile: {
+        Tel: response.Tel,
+        Name: response.Name,
+        Email: response.Email,
+        FirstName: response.FirstName,
+        ProfileImage: response.ProfileImage,
+        ActiveSystemID: response.ActiveSystemID,
+        RefreshToken: response.RefreshToken
+      }
     }
   }
 
@@ -228,16 +309,26 @@ class AuthService {
       throw new Error('No token received from server')
     }
 
+    // Decode the AccessToken to get the token data
+    const tokenData = this.decodeAccessToken(response.AccessToken)
+    
+    if (!tokenData) {
+      throw new Error('Invalid token format')
+    }
+
+    // Build AccessTokenInterface from decoded token and add additional user info
     return {
+      ...tokenData,
       AccessToken: response.AccessToken,
-      systemid: response.systemid,
-      userid: response.userid,
-      PortalID: response.PortalID,
-      AccessLevelID: response.AccessLevelID,
-      roles: response.roles || {},
-      expire: response.expire,
-      expiredate: response.expire ? new Date(response.expire) : new Date(),
-      SessionID: response.SessionID
+      userProfile: {
+        Tel: response.Tel,
+        Name: response.Name,
+        Email: response.Email,
+        FirstName: response.FirstName,
+        ProfileImage: response.ProfileImage,
+        ActiveSystemID: response.ActiveSystemID,
+        RefreshToken: response.RefreshToken
+      }
     }
   }
 
@@ -290,16 +381,26 @@ class AuthService {
       throw new Error('No token received from server')
     }
 
+    // Decode the AccessToken to get the token data
+    const tokenData = this.decodeAccessToken(response.AccessToken)
+    
+    if (!tokenData) {
+      throw new Error('Invalid token format')
+    }
+
+    // Build AccessTokenInterface from decoded token and add additional user info
     return {
+      ...tokenData,
       AccessToken: response.AccessToken,
-      systemid: response.systemid,
-      userid: response.userid,
-      PortalID: response.PortalID,
-      AccessLevelID: response.AccessLevelID,
-      roles: response.roles || {},
-      expire: response.expire,
-      expiredate: response.expire ? new Date(response.expire) : new Date(),
-      SessionID: response.SessionID
+      userProfile: {
+        Tel: response.Tel,
+        Name: response.Name,
+        Email: response.Email,
+        FirstName: response.FirstName,
+        ProfileImage: response.ProfileImage,
+        ActiveSystemID: response.ActiveSystemID,
+        RefreshToken: response.RefreshToken
+      }
     }
   }
 }

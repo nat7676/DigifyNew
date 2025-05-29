@@ -91,21 +91,24 @@ export const useAuthStore = defineStore('auth', () => {
     accessTokens.value[systemId] = token
     saveTokenToStorage(systemId, token)
     
+    // Store refresh token separately if available
+    if (token.userProfile?.RefreshToken) {
+      localStorage.setItem(`refreshToken_${systemId}`, token.userProfile.RefreshToken)
+    }
+    
     console.log('Current system ID:', currentSystemId)
     console.log('Is authenticated after token set:', isAuthenticated.value)
     
-    // Extract user info from token
-    if (!user.value) {
-      user.value = {
-        userid: token.userid,
-        systemid: token.systemid,
-        PortalID: token.PortalID,
-        AccessLevelID: token.AccessLevelID,
-        roles: token.roles,
-        name: '', // Will be populated from user profile
-        email: '',
-        profileImage: ''
-      }
+    // Extract user info from token and profile
+    user.value = {
+      userid: token.userid,
+      systemid: token.systemid,
+      PortalID: token.PortalID,
+      AccessLevelID: token.AccessLevelID,
+      roles: token.roles,
+      name: token.userProfile?.Name || '',
+      email: token.userProfile?.Email || '',
+      profileImage: token.userProfile?.ProfileImage || ''
     }
 
     // Schedule token refresh
@@ -141,8 +144,13 @@ export const useAuthStore = defineStore('auth', () => {
     if (!token) throw new Error('No token to refresh')
 
     try {
+      // Get the refresh token
+      const refreshTokenValue = localStorage.getItem(`refreshToken_${currentSystemId}`) || 
+                               token.userProfile?.RefreshToken || 
+                               token.AccessToken
+      
       // Call refresh token API
-      const newToken = await authService.refreshToken(token.AccessToken)
+      const newToken = await authService.refreshToken(refreshTokenValue)
       
       // Update token in store
       setToken(newToken.systemid, newToken)

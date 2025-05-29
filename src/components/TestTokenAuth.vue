@@ -22,7 +22,17 @@
           userid: authStore.currentToken.userid,
           AccessLevelID: authStore.currentToken.AccessLevelID,
           expire: authStore.currentToken.expire,
-          expiredate: authStore.currentToken.expiredate
+          expiredate: authStore.currentToken.expiredate,
+          roles: authStore.currentToken.roles
+        }, null, 2) }}</pre>
+      </div>
+      
+      <div v-if="authStore.user" class="mb-4">
+        <div class="text-caption text-medium-emphasis mb-1">User Profile:</div>
+        <pre class="text-caption" style="background: #f5f5f5; padding: 8px; border-radius: 4px;">{{ JSON.stringify({
+          name: authStore.user.name,
+          email: authStore.user.email,
+          profileImage: authStore.user.profileImage
         }, null, 2) }}</pre>
       </div>
 
