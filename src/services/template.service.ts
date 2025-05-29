@@ -52,6 +52,7 @@ class TemplateService {
         
         // Store the portal unique key for layout requests
         portalUniqueKey = portal.UniqueKey
+        console.log('Stored portal UniqueKey:', portalUniqueKey)
         
         return portal
       }
@@ -71,25 +72,37 @@ class TemplateService {
     useSystemKey?: string,
     objectId?: string
   ): Promise<any | null> {
+    console.log('getDashboardLayout called with:', { layoutType, useSystemKey, objectId })
+    console.log('Current portalUniqueKey:', portalUniqueKey)
+    console.log('Current systemUniqueKey:', systemUniqueKey)
+    
     // Generate unique keys for different layout levels
     const uniqueKeys: string[] = []
     
     // Global layout - use stored portal unique key
     if (portalUniqueKey) {
-      uniqueKeys.push(sha256(portalUniqueKey + '_' + layoutType))
+      const globalKey = sha256(portalUniqueKey + '_' + layoutType)
+      uniqueKeys.push(globalKey)
+      console.log('Added global key:', globalKey)
     }
     
     // System-specific layout
     if (useSystemKey || systemUniqueKey) {
       const sysKey = useSystemKey || systemUniqueKey || ''
-      uniqueKeys.push(sha256(sysKey + '_' + layoutType))
+      const systemLayoutKey = sha256(sysKey + '_' + layoutType)
+      uniqueKeys.push(systemLayoutKey)
+      console.log('Added system key:', systemLayoutKey)
     }
     
     // Object-specific layout
     if ((useSystemKey || systemUniqueKey) && objectId) {
       const sysKey = useSystemKey || systemUniqueKey || ''
-      uniqueKeys.push(sha256(sysKey + '_' + layoutType + '_' + objectId))
+      const objectKey = sha256(sysKey + '_' + layoutType + '_' + objectId)
+      uniqueKeys.push(objectKey)
+      console.log('Added object key:', objectKey)
     }
+    
+    console.log('Generated uniqueKeys:', uniqueKeys)
 
     try {
       const request: TemplateCacheType = {
