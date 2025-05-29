@@ -8,18 +8,15 @@ import { sha256 } from 'js-sha256'
 import { NodeEvent } from '@/modules/shared/shared'
 import type { 
   TemplateCacheType,
-  TemplateCachePortal,
-  TemplateCacheLayout
+  TemplateCachePortal
 } from '@/modules/shared/shared'
 
-interface TemplateCacheResponse {
-  TemplateCachePortal?: TemplateCachePortal[]
-  TemplateCacheLayout?: TemplateCacheLayout[]
-}
+// Remove unused interface - type is handled inline where needed
 
 // Cache storage
 const templateCache = new Map<string, any>()
 let portalUniqueKey: string | null = null
+let portalID: number | null = null
 let systemUniqueKey: string | null = null
 
 class TemplateService {
@@ -71,9 +68,11 @@ class TemplateService {
         if (portal) {
           templateCache.set(cacheKey, portal)
           
-          // Store the portal unique key for layout requests
+          // Store the portal unique key and ID for layout requests
           portalUniqueKey = portal.UniqueKey
+          portalID = portal.PortalID
           console.log('Stored portal UniqueKey:', portalUniqueKey)
+          console.log('Stored portal PortalID:', portalID)
           console.log('Portal data:', portal)
           
           return portal
@@ -109,7 +108,9 @@ class TemplateService {
           // Cache and store the dev portal settings
           templateCache.set(cacheKey, devPortal)
           portalUniqueKey = devPortal.UniqueKey
+          portalID = devPortal.PortalID
           console.log('Set development portal UniqueKey:', portalUniqueKey)
+          console.log('Set development portal PortalID:', portalID)
           
           return devPortal
         }
@@ -134,32 +135,21 @@ class TemplateService {
   ): Promise<any | null> {
     console.log('getDashboardLayout called with:', { layoutType, useSystemKey, objectId })
     console.log('Current portalUniqueKey:', portalUniqueKey)
+    console.log('Current portalID:', portalID)
     console.log('Current systemUniqueKey:', systemUniqueKey)
     
-    // Generate unique keys for different layout levels
-    const uniqueKeys: string[] = []
-    
-    // Global layout - use stored portal unique key
-    if (portalUniqueKey) {
-      const globalKey = sha256(portalUniqueKey + '_' + layoutType)
-      uniqueKeys.push(globalKey)
-      console.log('Added global key:', globalKey)
+    // If a specific system key is provided, temporarily set it
+    const originalSystemKey = systemUniqueKey
+    if (useSystemKey) {
+      systemUniqueKey = useSystemKey
     }
     
-    // System-specific layout
-    if (useSystemKey || systemUniqueKey) {
-      const sysKey = useSystemKey || systemUniqueKey || ''
-      const systemLayoutKey = sha256(sysKey + '_' + layoutType)
-      uniqueKeys.push(systemLayoutKey)
-      console.log('Added system key:', systemLayoutKey)
-    }
+    // Generate unique keys using the same logic as the old system
+    const uniqueKeys = this.getAllLayoutCacheKeys(layoutType, objectId)
     
-    // Object-specific layout
-    if ((useSystemKey || systemUniqueKey) && objectId) {
-      const sysKey = useSystemKey || systemUniqueKey || ''
-      const objectKey = sha256(sysKey + '_' + layoutType + '_' + objectId)
-      uniqueKeys.push(objectKey)
-      console.log('Added object key:', objectKey)
+    // Restore original system key if we temporarily changed it
+    if (useSystemKey) {
+      systemUniqueKey = originalSystemKey
     }
     
     console.log('Generated uniqueKeys:', uniqueKeys)
@@ -316,6 +306,13 @@ class TemplateService {
   }
 
   /**
+   * Get the current portal ID
+   */
+  getPortalID(): number | null {
+    return portalID
+  }
+
+  /**
    * Get the current system unique key
    */
   getSystemUniqueKey(): string | null {
@@ -352,6 +349,37 @@ class TemplateService {
     }
 
     return null
+  }
+
+  /**
+   * Get all layout cache keys for a specific layout type
+   * This matches the old system's getAllLayoutCacheKeys function
+   */
+  getAllLayoutCacheKeys(layoutType: string, objectId?: string): string[] {
+    const keys: string[] = []
+    
+    // Object-specific layout (most specific)
+    if (systemUniqueKey && objectId) {
+      const objectKey = sha256(systemUniqueKey + '_' + layoutType + '_' + objectId)
+      keys.push(objectKey)
+      console.log('Object key:', objectKey, `(${systemUniqueKey}_${layoutType}_${objectId})`)
+    }
+    
+    // System-specific layout
+    if (systemUniqueKey) {
+      const systemKey = sha256(systemUniqueKey + '_' + layoutType)
+      keys.push(systemKey)
+      console.log('System key:', systemKey, `(${systemUniqueKey}_${layoutType})`)
+    }
+    
+    // Global layout (least specific)
+    if (portalUniqueKey && portalID) {
+      const globalKey = sha256(portalUniqueKey + '_' + layoutType)
+      keys.push(globalKey)
+      console.log('Global key:', globalKey, `(${portalUniqueKey}_${layoutType})`)
+    }
+    
+    return keys
   }
 }
 

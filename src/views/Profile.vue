@@ -223,13 +223,12 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { useSystemStore } from '@/stores/system'
+// Removed unused import
 import socketService from '@/services/socket.service'
 import templateService from '@/services/template.service'
 import { NodeEvent } from '@/modules/shared/shared'
 
 const authStore = useAuthStore()
-const systemStore = useSystemStore()
 
 // State
 const loading = ref(false)
@@ -273,6 +272,7 @@ const debugInfo = computed(() => {
     userData: userData.value,
     portalSettings: portalSettings.value,
     templatePortalKey: templateService.getPortalUniqueKey(),
+    templatePortalID: templateService.getPortalID(),
     templateSystemKey: templateService.getSystemUniqueKey()
   }, null, 2)
 })
