@@ -93,7 +93,19 @@ async function initializeApp() {
 
     // Connect socket after stores are ready
     socketService.connect()
-    console.log('🔌 Socket service connected')
+    console.log('🔌 Socket service connecting...')
+    
+    // Once connected, try to load domain settings again
+    setTimeout(async () => {
+      if (socketService.isConnected.value) {
+        try {
+          await systemStore.loadDomainSettings()
+          console.log('✅ Domain settings loaded')
+        } catch (error) {
+          console.warn('Failed to load domain settings:', error)
+        }
+      }
+    }, 2000)
   } catch (error) {
     console.error('Failed to initialize stores:', error)
     logError(error as Error, 'Store initialization')

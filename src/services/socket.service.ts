@@ -18,6 +18,10 @@ const isConnected = ref(false)
 const reconnectAttempts = ref(0)
 const subscriptions = ref<Map<string, Set<(data: any) => void>>>(new Map())
 
+// Connection promise for waiting until connected
+let connectionPromise: Promise<void> | null = null
+let connectionResolve: (() => void) | null = null
+
 // Request tracking
 interface PendingRequest {
   resolve: (value: any) => void
@@ -56,6 +60,11 @@ export function initializeSockets() {
   const authStore = useAuthStore()
   const systemStore = useSystemStore()
   
+  // Create connection promise
+  connectionPromise = new Promise((resolve) => {
+    connectionResolve = resolve
+  })
+  
   // Create socket connections to all servers
   serverUrls.forEach((url) => {
     const socket = io(url, {
@@ -76,6 +85,12 @@ export function initializeSockets() {
       console.log(`Connected to ${url}`)
       isConnected.value = true
       reconnectAttempts.value = 0
+      
+      // Resolve connection promise on first connection
+      if (connectionResolve) {
+        connectionResolve()
+        connectionResolve = null
+      }
       
       // Re-subscribe to all active subscriptions
       resubscribeAll(socket)
@@ -141,12 +156,25 @@ function getActiveSocket(): Socket | null {
   return sockets.value[0] || null
 }
 
+// Wait for connection
+async function waitForConnection(): Promise<void> {
+  if (isConnected.value) return
+  if (connectionPromise) {
+    await connectionPromise
+  }
+}
+
 // Send request to server
 export async function sendRequest<T = any>(
   event: NodeEvent,
   data: any = {},
-  options: { timeout?: number } = {}
+  options: { timeout?: number; skipWait?: boolean } = {}
 ): Promise<T> {
+  // Wait for connection unless explicitly skipped
+  if (!options.skipWait) {
+    await waitForConnection()
+  }
+  
   const socket = getActiveSocket()
   if (!socket || !socket.connected) {
     throw new Error('Not connected to server')

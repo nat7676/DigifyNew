@@ -135,11 +135,13 @@ export const useSystemStore = defineStore('system', () => {
     window.addEventListener('online', () => setOnlineStatus(true))
     window.addEventListener('offline', () => setOnlineStatus(false))
 
-    // Load settings
-    await Promise.all([
-      loadDomainSettings(),
-      loadSystemInfo()
-    ])
+    // Load settings with error handling
+    // Don't wait for domain settings from server during initialization
+    loadDomainSettings().catch(error => {
+      console.warn('Domain settings will load when socket connects:', error.message)
+    })
+    
+    await loadSystemInfo()
   }
 
   return {
