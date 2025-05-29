@@ -102,15 +102,23 @@ export const useAuthStore = defineStore('auth', () => {
         data: {}
       })
       
+      console.log('UserCurrentGet response (login):', response)
+      
       if (response.ApiResp?.result?.length > 0) {
         const userData = response.ApiResp.result[0]
-        console.log('Fetched user data with UniqueSystemKey:', userData.UniqueSystemKey)
+        console.log('User data (login):', userData)
+        console.log('UniqueSystemKey (login):', userData.UniqueSystemKey)
         
         // Store the UniqueSystemKey in template service
         if (userData.UniqueSystemKey) {
           const { default: templateService } = await import('@/services/template.service')
           templateService.setSystemUniqueKey(userData.UniqueSystemKey)
+          console.log('Stored UniqueSystemKey in template service (login)')
+        } else {
+          console.warn('No UniqueSystemKey found in user data (login)')
         }
+      } else {
+        console.warn('No user data returned from API (login)')
       }
     } catch (error) {
       console.error('Failed to fetch user data after login:', error)
@@ -356,15 +364,23 @@ export const useAuthStore = defineStore('auth', () => {
               data: {}
             })
             
+            console.log('UserCurrentGet response:', response)
+            
             if (response.ApiResp?.result?.length > 0) {
               const userData = response.ApiResp.result[0]
-              console.log('Fetched user data with UniqueSystemKey:', userData.UniqueSystemKey)
+              console.log('User data:', userData)
+              console.log('UniqueSystemKey:', userData.UniqueSystemKey)
               
               // Store the UniqueSystemKey in template service
               if (userData.UniqueSystemKey) {
                 const { default: templateService } = await import('@/services/template.service')
                 templateService.setSystemUniqueKey(userData.UniqueSystemKey)
+                console.log('Stored UniqueSystemKey in template service')
+              } else {
+                console.warn('No UniqueSystemKey found in user data')
               }
+            } else {
+              console.warn('No user data returned from API')
             }
           } catch (error) {
             console.error('Failed to fetch user data during initialization:', error)

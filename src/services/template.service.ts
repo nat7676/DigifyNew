@@ -86,7 +86,35 @@ class TemplateService {
       if (domain === 'localhost' && !templateCache.has(cacheKey + ':tried-default')) {
         console.log('Trying with default domain for localhost...')
         templateCache.set(cacheKey + ':tried-default', true)
-        return this.getPortalSettings('digify.no')
+        const fallbackResult = await this.getPortalSettings('digify.no')
+        
+        // If still no result, use development defaults
+        if (!fallbackResult) {
+          console.log('Using development default portal settings')
+          const devPortal: TemplateCachePortal = {
+            UniqueKey: 'dev_portal_unique_key',
+            PortalID: 1,
+            SettingsJson: JSON.stringify({
+              DomainLogo: '/img/digify_favicon.png',
+              DomainName: 'Development Portal',
+              DomainColors: JSON.stringify({
+                primary: '#1976D2',
+                secondary: '#424242',
+                accent: '#82B1FF'
+              })
+            }),
+            CSS: ''
+          }
+          
+          // Cache and store the dev portal settings
+          templateCache.set(cacheKey, devPortal)
+          portalUniqueKey = devPortal.UniqueKey
+          console.log('Set development portal UniqueKey:', portalUniqueKey)
+          
+          return devPortal
+        }
+        
+        return fallbackResult
       }
 
       return null
@@ -162,6 +190,30 @@ class TemplateService {
         } catch (error) {
           console.error('Failed to parse layout JSON:', error)
           return null
+        }
+      }
+
+      // If no layout found and we're in development, return a default layout
+      if (uniqueKeys.length === 0 || (portalUniqueKey && portalUniqueKey.startsWith('dev_'))) {
+        console.log('No layout found, returning default development layout')
+        return {
+          sections: [
+            {
+              id: 'welcome',
+              title: 'Welcome to Insight Dashboard',
+              columns: [
+                {
+                  width: 12,
+                  elements: [
+                    {
+                      type: 'text',
+                      content: 'This is a default development layout. Configure your portal settings to see the actual layout.'
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         }
       }
 
