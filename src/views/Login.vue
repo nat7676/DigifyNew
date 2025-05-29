@@ -218,8 +218,14 @@ const handleLogin = async () => {
     // Clear debug on success
     debugResponse.value = null
     
-    // Navigate to dashboard
-    await router.push('/dashboard')
+    // Debug navigation
+    console.log('Login successful, navigating to dashboard...')
+    console.log('Current route:', router.currentRoute.value.path)
+    console.log('Is authenticated:', authStore.isAuthenticated)
+    
+    // Use window.location for a hard redirect to ensure clean navigation
+    // This avoids any potential issues with route guards
+    window.location.href = '/dashboard'
   } catch (error: any) {
     console.error('Login failed:', error)
     

@@ -86,9 +86,13 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const setToken = (systemId: number, token: AccessTokenInterface) => {
+    console.log('Setting token for system:', systemId, token)
     currentSystemId = systemId
     accessTokens.value[systemId] = token
     saveTokenToStorage(systemId, token)
+    
+    console.log('Current system ID:', currentSystemId)
+    console.log('Is authenticated after token set:', isAuthenticated.value)
     
     // Extract user info from token
     if (!user.value) {
@@ -214,10 +218,7 @@ export const useAuthStore = defineStore('auth', () => {
       sessionTimeoutId.value = null
     }
 
-    // Navigate to login
-    if (router) {
-      await router.push('/login')
-    }
+    // Navigation to login should be handled by route guards or components
   }
 
   const switchSystem = async (systemId: number) => {
