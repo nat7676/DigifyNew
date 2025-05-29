@@ -143,6 +143,13 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <!-- Token Test Section (Debug) -->
+    <v-row class="mt-6">
+      <v-col cols="12">
+        <TestTokenAuth />
+      </v-col>
+    </v-row>
   </div>
 </template>
 
@@ -151,6 +158,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemStore } from '@/stores/system'
 import { useUIStore } from '@/stores/ui'
+import TestTokenAuth from '@/components/TestTokenAuth.vue'
 
 const authStore = useAuthStore()
 const systemStore = useSystemStore()
