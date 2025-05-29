@@ -41,18 +41,24 @@ class TemplateService {
         uniqueKeys: []
       }
       
-      const response = await socketService.sendRequest<TemplateCacheResponse>(
+      const response = await socketService.sendRequest<any>(
         NodeEvent.TemplateCache,
         request
       )
 
-      if (response.TemplateCachePortal && response.TemplateCachePortal.length > 0) {
-        const portal = response.TemplateCachePortal[0]
+      console.log('Full portal response:', response)
+      
+      // The actual data might be in response.TemplateCacheResp
+      const templateData = response.TemplateCacheResp || response
+
+      if (templateData && Array.isArray(templateData) && templateData.length > 0) {
+        const portal = templateData[0]
         templateCache.set(cacheKey, portal)
         
         // Store the portal unique key for layout requests
         portalUniqueKey = portal.UniqueKey
         console.log('Stored portal UniqueKey:', portalUniqueKey)
+        console.log('Portal data:', portal)
         
         return portal
       }
@@ -111,14 +117,19 @@ class TemplateService {
         uniqueKeys: uniqueKeys
       }
       
-      const response = await socketService.sendRequest<TemplateCacheResponse>(
+      const response = await socketService.sendRequest<any>(
         NodeEvent.TemplateCache,
         request
       )
+      
+      console.log('Layout response:', response)
+      
+      // The actual data might be in response.TemplateCacheResp
+      const templateData = response.TemplateCacheResp || response
 
-      if (response.TemplateCacheLayout && response.TemplateCacheLayout.length > 0) {
+      if (templateData && Array.isArray(templateData) && templateData.length > 0) {
         // Return the most specific layout found (last in array)
-        const layout = response.TemplateCacheLayout[response.TemplateCacheLayout.length - 1]
+        const layout = templateData[templateData.length - 1]
         
         try {
           return JSON.parse(layout.Content)
