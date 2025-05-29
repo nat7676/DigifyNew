@@ -223,9 +223,8 @@ const handleLogin = async () => {
     console.log('Current route:', router.currentRoute.value.path)
     console.log('Is authenticated:', authStore.isAuthenticated)
     
-    // Use window.location for a hard redirect to ensure clean navigation
-    // This avoids any potential issues with route guards
-    window.location.href = '/dashboard'
+    // Use Vue Router navigation
+    await router.push('/dashboard')
   } catch (error: any) {
     console.error('Login failed:', error)
     

@@ -11,9 +11,6 @@ import { NodeEvent } from '@/modules/shared/shared'
 import authService from '@/services/auth.service'
 import socketService from '@/services/socket.service'
 
-// Store the current systemId for token management
-let currentSystemId = 0
-
 export const useAuthStore = defineStore('auth', () => {
   const systemStore = useSystemStore()
 
@@ -24,17 +21,18 @@ export const useAuthStore = defineStore('auth', () => {
   const redirectUrl = ref<string | null>(null)
   const lastActivity = ref(Date.now())
   const sessionTimeoutId = ref<number | null>(null)
+  const currentSystemId = ref(0)
 
   // Token refresh timer
   let tokenRefreshTimer: number | null = null
 
   // Computed
   const isAuthenticated = computed(() => {
-    const token = accessTokens.value[currentSystemId]
+    const token = accessTokens.value[currentSystemId.value]
     return !!token && token.expire > Date.now() / 1000
   })
 
-  const currentToken = computed(() => accessTokens.value[currentSystemId])
+  const currentToken = computed(() => accessTokens.value[currentSystemId.value])
 
   const bearerToken = computed(() => {
     const token = currentToken.value
@@ -87,7 +85,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const setToken = (systemId: number, token: AccessTokenInterface) => {
     console.log('Setting token for system:', systemId, token)
-    currentSystemId = systemId
+    currentSystemId.value = systemId
     accessTokens.value[systemId] = token
     saveTokenToStorage(systemId, token)
     
@@ -96,7 +94,7 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem(`refreshToken_${systemId}`, token.userProfile.RefreshToken)
     }
     
-    console.log('Current system ID:', currentSystemId)
+    console.log('Current system ID:', currentSystemId.value)
     console.log('Is authenticated after token set:', isAuthenticated.value)
     
     // Extract user info from token and profile
@@ -145,7 +143,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       // Get the refresh token
-      const refreshTokenValue = localStorage.getItem(`refreshToken_${currentSystemId}`) || 
+      const refreshTokenValue = localStorage.getItem(`refreshToken_${currentSystemId.value}`) || 
                                token.userProfile?.RefreshToken || 
                                token.AccessToken
       
@@ -213,7 +211,7 @@ export const useAuthStore = defineStore('auth', () => {
     // Clear state
     accessTokens.value = {}
     user.value = null
-    currentSystemId = 0
+    currentSystemId.value = 0
 
     // Clear timers
     if (tokenRefreshTimer) {
@@ -230,7 +228,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const switchSystem = async (systemId: number) => {
-    currentSystemId = systemId
+    currentSystemId.value = systemId
     const token = accessTokens.value[systemId]
     
     if (token) {
@@ -263,19 +261,38 @@ export const useAuthStore = defineStore('auth', () => {
 
 
   const initialize = async () => {
-    // Load tokens from storage
-    const systemIds = systemStore.availableSystemIds
-    systemIds.forEach(systemId => {
-      const token = loadTokenFromStorage(systemId)
-      if (token) {
-        setToken(systemId, token)
+    // Try to load all tokens from localStorage by scanning for AccessTokenObj[*] keys
+    const storageKeys = Object.keys(localStorage)
+    const tokenKeys = storageKeys.filter(key => key.startsWith('AccessTokenObj['))
+    
+    tokenKeys.forEach(key => {
+      const matches = key.match(/AccessTokenObj\[(\d+)\]/)
+      if (matches && matches[1]) {
+        const systemId = parseInt(matches[1])
+        const token = loadTokenFromStorage(systemId)
+        if (token) {
+          // Don't use setToken here as it would trigger side effects
+          accessTokens.value[systemId] = token
+          
+          // Set the first valid token's system as current
+          if (!currentSystemId.value) {
+            currentSystemId.value = systemId
+            
+            // Update user info from the token
+            user.value = {
+              userid: token.userid,
+              systemid: token.systemid,
+              PortalID: token.PortalID,
+              AccessLevelID: token.AccessLevelID,
+              roles: token.roles,
+              name: token.userProfile?.Name || '',
+              email: token.userProfile?.Email || '',
+              profileImage: token.userProfile?.ProfileImage || ''
+            }
+          }
+        }
       }
     })
-
-    // Set current system
-    if (systemStore.currentSystemId && accessTokens.value[systemStore.currentSystemId]) {
-      currentSystemId = systemStore.currentSystemId
-    }
 
     // Start session timeout monitoring
     checkSessionTimeout()
