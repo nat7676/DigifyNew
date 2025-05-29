@@ -161,6 +161,11 @@ async function waitForConnection(): Promise<void> {
   }
 }
 
+// Get all connected sockets
+function getAllConnectedSockets(): Socket[] {
+  return sockets.value.filter(socket => socket.connected)
+}
+
 // Send request to server
 export async function sendRequest<T = any>(
   event: NodeEvent,
@@ -170,11 +175,6 @@ export async function sendRequest<T = any>(
   // Wait for connection unless explicitly skipped
   if (!options.skipWait) {
     await waitForConnection()
-  }
-  
-  const socket = getActiveSocket()
-  if (!socket || !socket.connected) {
-    throw new Error('Not connected to server')
   }
 
   const authStore = useAuthStore()
@@ -199,6 +199,24 @@ export async function sendRequest<T = any>(
   // Only add login if we have a token AND the event requires login
   if (authStore.currentToken && config.LoginRequired) {
     request.login = authStore.currentToken
+  }
+
+  // Determine which sockets to send to based on SpreadType
+  let targetsockets: Socket[] = []
+  
+  if (config.SpreadType === NodeSpreadType.All) {
+    // Send to ALL connected sockets
+    targetsockets = getAllConnectedSockets()
+    if (targetsockets.length === 0) {
+      throw new Error('No connected sockets available')
+    }
+  } else {
+    // Send to one socket based on SpreadType
+    const socket = getActiveSocket()
+    if (!socket || !socket.connected) {
+      throw new Error('Not connected to server')
+    }
+    targetsockets = [socket]
   }
 
   // Create promise for response
@@ -226,8 +244,13 @@ export async function sendRequest<T = any>(
   // Store start time for response timing
   pendingRequests.value.get(guid)!.startTime = startTime
 
-  // Send request using NewObject event
-  socket.emit(NodeEvent.NewObject, request)
+  // Send request to all target sockets
+  targetsockets.forEach((socket, index) => {
+    socket.emit(NodeEvent.NewObject, request)
+    if (config.SpreadType === NodeSpreadType.All) {
+      console.log(`Sent ${event} to socket ${index + 1}/${targetsockets.length}`)
+    }
+  })
 
   return promise
 }

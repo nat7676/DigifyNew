@@ -174,12 +174,17 @@ export const useAuthStore = defineStore('auth', () => {
       // Update token in store (this will also fetch user data)
       await setToken(newToken.systemid, newToken)
       
-      // Update socket authentication
-      await socketService.sendRequest(NodeEvent.AccessToken, {
-        AccessToken: newToken.AccessToken,
-        LatestChatMsg: new Date(),
-        SessionID: newToken.SessionID
-      })
+      // Update socket authentication on ALL servers
+      try {
+        await socketService.sendRequest(NodeEvent.AccessToken, {
+          AccessToken: newToken.AccessToken,
+          LatestChatMsg: new Date(),
+          SessionID: newToken.SessionID
+        })
+        console.log('✅ Refreshed AccessToken sent to all connected sockets')
+      } catch (error) {
+        console.error('Failed to send refreshed AccessToken to sockets:', error)
+      }
     } catch (error) {
       console.error('Token refresh failed:', error)
       throw error
@@ -195,12 +200,19 @@ export const useAuthStore = defineStore('auth', () => {
       // Set token in store (this will also fetch user data)
       await setToken(token.systemid, token)
 
-      // Send AccessToken to all socket servers for authentication
-      await socketService.sendRequest(NodeEvent.AccessToken, {
-        AccessToken: token.AccessToken,
-        LatestChatMsg: new Date(),
-        SessionID: token.SessionID
-      })
+      // Send AccessToken to ALL socket servers for authentication
+      // Note: The old system sends this with SpreadType.All to authenticate on all servers
+      try {
+        await socketService.sendRequest(NodeEvent.AccessToken, {
+          AccessToken: token.AccessToken,
+          LatestChatMsg: new Date(),
+          SessionID: token.SessionID
+        })
+        console.log('✅ AccessToken sent to all connected sockets')
+      } catch (error) {
+        console.error('Failed to send AccessToken to sockets:', error)
+        // Don't throw - authentication might still work on some servers
+      }
 
       // Clear any redirect URL
       redirectUrl.value = null
