@@ -33,10 +33,11 @@ const pendingRequests = ref<Map<string, PendingRequest>>(new Map())
 
 // Server URLs (round-robin for load balancing)
 const serverUrls = [
-  'https://napi.digify.no',
+   'https://napi.digify.no:3004' // exclusive for debugging
+ /*  'https://napi.digify.no',
   'https://napi.digify.no:3000',
   'https://napi.digify.no:3002',
-  'https://napi.digify.no:3003',
+  'https://napi.digify.no:3003', */
 ]
 
 // Generate unique request ID
