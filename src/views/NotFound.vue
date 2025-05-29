@@ -47,7 +47,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 const goHome = () => {
-  router.push('/dashboard')
+  router.push('/insight/dashboard')
 }
 </script>
 

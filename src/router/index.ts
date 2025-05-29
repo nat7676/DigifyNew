@@ -10,7 +10,7 @@ import { useAuthStore } from '@/stores/auth'
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    redirect: '/dashboard'
+    redirect: '/insight/dashboard'
   },
   {
     path: '/login',
@@ -23,11 +23,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/dashboard',
-    name: 'dashboard',
-    component: () => import('@/views/Dashboard.vue'),
-    meta: {
-      requiresAuth: true
-    }
+    redirect: '/insight/dashboard'  // Redirect old path to new path
   },
   {
     path: '/profile',
@@ -90,7 +86,7 @@ router.beforeEach(async (to, _from, next) => {
 
   // Check if user is trying to access login while authenticated
   if (to.path === '/login' && authStore.isAuthenticated) {
-    next('/dashboard')
+    next('/insight/dashboard')
     return
   }
 

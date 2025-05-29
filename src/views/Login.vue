@@ -224,7 +224,7 @@ const handleLogin = async () => {
     console.log('Is authenticated:', authStore.isAuthenticated)
     
     // Use Vue Router navigation
-    await router.push('/dashboard')
+    await router.push('/insight/dashboard')
   } catch (error: any) {
     console.error('Login failed:', error)
     
@@ -283,7 +283,7 @@ onMounted(() => {
 
   // Check if already authenticated
   if (authStore.isAuthenticated) {
-    router.push('/dashboard')
+    router.push('/insight/dashboard')
   }
 })
 </script>

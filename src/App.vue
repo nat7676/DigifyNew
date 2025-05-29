@@ -12,7 +12,7 @@
           <v-list-item
             prepend-icon="mdi-home"
             title="Dashboard"
-            to="/dashboard"
+            to="/insight/dashboard"
           />
           <v-list-item
             prepend-icon="mdi-account"
