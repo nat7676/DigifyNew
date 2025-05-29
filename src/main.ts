@@ -77,6 +77,10 @@ async function initializeApp() {
   // Set Vuetify instance in UI store
   uiStore.setVuetifyInstance(vuetify)
 
+  // Initialize socket service
+  const { default: socketService } = await import('./services/socket.service')
+  socketService.initialize()
+
   try {
     // Initialize stores
     await Promise.all([
@@ -86,6 +90,10 @@ async function initializeApp() {
     ])
 
     console.log('✅ Stores initialized')
+
+    // Connect socket after stores are ready
+    socketService.connect()
+    console.log('🔌 Socket service connected')
   } catch (error) {
     console.error('Failed to initialize stores:', error)
     logError(error as Error, 'Store initialization')

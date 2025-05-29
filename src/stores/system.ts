@@ -5,7 +5,8 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { DomainSettings, SystemInfo } from '@/modules/shared/shared'
+import type { DomainSettings, SystemInfo } from '@/types/shared'
+import templateService from '@/services/template.service'
 
 export const useSystemStore = defineStore('system', () => {
   // State
@@ -53,16 +54,30 @@ export const useSystemStore = defineStore('system', () => {
 
   // Methods
   const loadDomainSettings = async () => {
-    const stored = localStorage.getItem('DomainSettings')
-    if (stored) {
-      try {
-        domainSettings.value = JSON.parse(stored)
-      } catch (error) {
-        console.error('Failed to parse domain settings:', error)
+    // Get current domain
+    const domain = window.location.hostname
+    
+    try {
+      // Try to load from template service (localStorage with server fallback)
+      const settings = await templateService.loadDomainSettings(domain)
+      if (settings) {
+        domainSettings.value = settings
+        // Also save to our local storage key
+        localStorage.setItem('DomainSettings', JSON.stringify(settings))
+      }
+    } catch (error) {
+      console.error('Failed to load domain settings:', error)
+      
+      // Fallback to old localStorage key
+      const stored = localStorage.getItem('DomainSettings')
+      if (stored) {
+        try {
+          domainSettings.value = JSON.parse(stored)
+        } catch (parseError) {
+          console.error('Failed to parse stored domain settings:', parseError)
+        }
       }
     }
-
-    // TODO: Fetch latest domain settings from server
   }
 
   const saveDomainSettings = (settings: DomainSettings) => {

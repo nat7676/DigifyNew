@@ -9,6 +9,8 @@ import type { Router } from 'vue-router'
 import axios from 'axios'
 import type { AccessTokenInterface, UserInfo } from '@/types/shared'
 import { useSystemStore } from './system'
+import authService from '@/services/auth.service'
+import socketService from '@/services/socket.service'
 
 // Store the current systemId for token management
 let currentSystemId = 0
@@ -143,28 +145,40 @@ export const useAuthStore = defineStore('auth', () => {
     const token = currentToken.value
     if (!token) throw new Error('No token to refresh')
 
-    // TODO: Implement actual token refresh API call
-    // For now, just log
-    console.log('Token refresh would happen here')
+    try {
+      // Call refresh token API
+      const newToken = await authService.refreshToken(token.AccessToken)
+      
+      // Update token in store
+      setToken(newToken.systemid, newToken)
+      
+      // Update socket authentication
+      await socketService.sendRequest('AccessToken', {
+        AccessToken: newToken.AccessToken,
+        LatestChatMsg: new Date(),
+        SessionID: newToken.SessionID
+      })
+    } catch (error) {
+      console.error('Token refresh failed:', error)
+      throw error
+    }
   }
 
   const login = async (mobile: string, password: string): Promise<void> => {
     loading.value = true
     try {
-      // TODO: Implement actual login API call
-      // For now, create a mock token
-      const mockToken: AccessTokenInterface = {
-        AccessToken: 'mock-token-' + Date.now(),
-        systemid: 1,
-        userid: parseInt(mobile),
-        PortalID: 1,
-        AccessLevelID: 100,
-        roles: { 1: true, 2: true },
-        expire: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours
-        SessionID: 'session-' + Date.now()
-      }
+      // Call real login API
+      const token = await authService.login(mobile, password)
+      
+      // Set token in store
+      setToken(token.systemid, token)
 
-      setToken(1, mockToken)
+      // Send AccessToken to all socket servers for authentication
+      await socketService.sendRequest('AccessToken', {
+        AccessToken: token.AccessToken,
+        LatestChatMsg: new Date(),
+        SessionID: token.SessionID
+      })
 
       // Navigate to redirect URL or dashboard
       const destination = redirectUrl.value || '/dashboard'
@@ -172,6 +186,9 @@ export const useAuthStore = defineStore('auth', () => {
       if (router) {
         await router.push(destination)
       }
+    } catch (error: any) {
+      console.error('Login failed:', error)
+      throw error
     } finally {
       loading.value = false
     }

@@ -8,8 +8,8 @@ import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemStore } from '@/stores/system'
 import { useUIStore } from '@/stores/ui'
-import type { NodeEvent, NodeObject, SubmitType } from '@/modules/shared/shared'
-import { eventconfig } from '@/modules/shared/shared'
+import type { NodeObject } from '@/modules/shared/shared'
+import { NodeEvent, SubmitType, eventconfig } from '@/modules/shared/shared'
 
 // Socket state
 const sockets = ref<Socket[]>([])
@@ -29,9 +29,10 @@ const pendingRequests = ref<Map<string, PendingRequest>>(new Map())
 
 // Server URLs (round-robin for load balancing)
 const serverUrls = [
-  'https://data.digify.no:3001',
-  'https://data2.digify.no:3001',
-  'https://data3.digify.no:3001',
+  'https://napi.digify.no',
+  'https://napi.digify.no:3000',
+  'https://napi.digify.no:3002',
+  'https://napi.digify.no:3003',
 ]
 
 // Generate unique request ID

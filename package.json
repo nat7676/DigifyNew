@@ -27,6 +27,7 @@
     "file-saver": "^2.0.5",
     "highcharts": "^11.4.8",
     "highcharts-vue": "^2.0.1",
+    "js-sha256": "^0.9.0",
     "lodash": "^4.17.21",
     "marked": "^15.0.10",
     "pinia": "^3.0.2",

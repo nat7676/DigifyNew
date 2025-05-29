@@ -40,6 +40,21 @@ Recreate DigifyOld with modern Vue 3/Vuetify 3/TypeScript/Composition API archit
   - [x] Subscription management
 - [x] Add type definitions for shared modules
 
+### ✅ Phase 2.5: Server Integration (COMPLETED)
+- [x] Connect socket service to real servers
+  - [x] Update server URLs to napi.digify.no
+  - [x] Initialize socket connections on app start
+- [x] Implement actual login API
+  - [x] Create auth.service.ts with all login methods
+  - [x] Update auth store to use real API calls
+  - [x] Handle token storage and refresh
+  - [x] Send AccessToken to socket servers
+- [x] Implement template retrieval
+  - [x] Create template.service.ts
+  - [x] Portal settings loading with cache
+  - [x] Dashboard layout retrieval with SHA256 keys
+  - [x] Multi-level layout fallback system
+
 ### 🚧 Phase 3: Dashboard Framework (IN PROGRESS)
 - [ ] Build dashboard framework and routing
   - [ ] Implement dynamic route loading from server
