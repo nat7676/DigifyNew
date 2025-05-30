@@ -119,6 +119,13 @@ router.beforeEach(async (to, from, next) => {
         query: { ...to.query, contextId: currentContextId }
       })
       return
+    } else {
+      // Check if the contextId in URL differs from current system
+      const requestedSystemId = parseInt(contextId)
+      if (requestedSystemId && requestedSystemId !== authStore.currentSystemId) {
+        console.log(`ContextId in URL (${requestedSystemId}) differs from current system (${authStore.currentSystemId}), allowing navigation for system switch`)
+        // Allow navigation - the component will handle the system switch
+      }
     }
   }
 

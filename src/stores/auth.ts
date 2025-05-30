@@ -375,24 +375,28 @@ export const useAuthStore = defineStore('auth', () => {
         const accessTokenStr = tokenData.AccessToken
         const refreshToken = tokenData.RefreshToken
         
-        // Decode the access token (it's base64 encoded JSON)
-        const tokenPayload = JSON.parse(atob(accessTokenStr.split('.')[0] || accessTokenStr))
-        console.log('Decoded token payload:', tokenPayload)
+        // Import auth service to use proper token decoding
+        const { default: authService } = await import('@/services/auth.service')
         
-        // The token might be an array, get the first element
-        const tokenInfo = Array.isArray(tokenPayload) ? tokenPayload[0] : tokenPayload
+        // Use the proper decoding function from auth service
+        const decodedToken = authService.decodeAccessToken(accessTokenStr)
+        if (!decodedToken) {
+          throw new Error('Failed to decode access token')
+        }
+        console.log('Decoded token:', decodedToken)
         
         // Create a new AccessTokenInterface object
         const newToken: AccessTokenInterface = {
           AccessToken: accessTokenStr,
-          SessionID: generateGuid(), // Generate a new session ID
-          systemid: tokenInfo.systemid,
-          userid: tokenInfo.userid,
-          expire: tokenInfo.expire,
-          expiredate: new Date(tokenInfo.expire * 1000).toISOString(),
-          PortalID: tokenInfo.PortalID,
-          AccessLevelID: tokenInfo.AccessLevelID,
-          roles: tokenInfo.roles || {},
+          SessionID: decodedToken.SessionID || generateGuid(), // Use existing or generate new
+          systemid: decodedToken.systemid,
+          userid: decodedToken.userid,
+          expire: decodedToken.expire,
+          expiredate: decodedToken.expiredate,
+          PortalID: decodedToken.PortalID,
+          AccessLevelID: decodedToken.AccessLevelID,
+          roles: decodedToken.roles || {},
+          rid: decodedToken.rid,
           userProfile: {
             // Keep existing profile data but update with new token info
             ...(currentToken.value?.userProfile || {}),
@@ -410,10 +414,9 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (error) {
       console.error('Failed to switch systems:', error)
       
-      // Update the current system ID anyway to prevent redirect loops
-      currentSystemId.value = systemId
-      
-      // Don't throw - let the UI handle the error gracefully
+      // Don't update currentSystemId on failure - this could cause confusion
+      // The UI should handle the error and possibly redirect back
+      throw error
     }
   }
 

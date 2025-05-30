@@ -132,13 +132,14 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemStore } from '@/stores/system'
 import { useUIStore } from '@/stores/ui'
 import templateService from '@/services/template.service'
 
 const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 const systemStore = useSystemStore()
 const uiStore = useUIStore()
@@ -276,8 +277,18 @@ watch(contextId, async (newContextId, oldContextId) => {
       // Try to switch systems if needed
       try {
         await authStore.switchSystem(newSystemId)
+        console.log('Successfully switched to system:', newSystemId)
       } catch (error) {
-        console.warn('Could not switch to system', newSystemId, '- will load data anyway')
+        console.error('Failed to switch to system', newSystemId, error)
+        // Show error to user
+        uiStore.showSnackbar(`Failed to switch to system ${newSystemId}. You may not have access.`, 'error')
+        
+        // Redirect back to the current system
+        router.push({
+          path: route.path,
+          query: { ...route.query, contextId: authStore.currentSystemId?.toString() }
+        })
+        return
       }
     }
     

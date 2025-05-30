@@ -40,7 +40,7 @@ class AuthService {
    * Decode the AccessToken to extract user information
    * The token is base64 encoded JSON with a 32-character hash at the end
    */
-  private decodeAccessToken(accessToken: string): Omit<AccessTokenInterface, 'AccessToken' | 'userProfile'> | null {
+  decodeAccessToken(accessToken: string): Omit<AccessTokenInterface, 'AccessToken' | 'userProfile'> | null {
     try {
       // Decode base64
       const decoded = atob(accessToken)
