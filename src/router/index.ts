@@ -95,51 +95,20 @@ router.beforeEach(async (to, from, next) => {
   // For authenticated routes, ensure contextId is present
   if (requiresAuth && authStore.isAuthenticated) {
     const contextId = to.query.contextId as string
-    const currentSystemId = authStore.currentSystemId
     
-    // If no contextId in URL, add it
+    // If no contextId in URL, add it from the current system
     if (!contextId) {
+      const currentSystemId = authStore.currentSystemId || authStore.currentToken?.systemid || 1
       next({
         ...to,
-        query: { ...to.query, contextId: currentSystemId || 1 }
+        query: { ...to.query, contextId: currentSystemId }
       })
       return
     }
     
-    // Parse the requested system ID
-    const requestedSystemId = parseInt(contextId)
-    
-    // Check if this is the same navigation we just processed
-    // This happens when we change the query params
-    if (to.path === from.path && 
-        to.query.contextId === from.query.contextId &&
-        JSON.stringify(to.params) === JSON.stringify(from.params)) {
-      // Same route, just let it through
-      next()
-      return
-    }
-    
-    // If contextId doesn't match current system, switch systems
-    if (requestedSystemId !== currentSystemId) {
-      console.log('System mismatch detected. Current:', currentSystemId, 'Requested:', requestedSystemId)
-      
-      try {
-        // Switch to the requested system
-        await authStore.switchSystem(requestedSystemId)
-        console.log('Successfully switched to system:', requestedSystemId)
-        
-        // Continue with navigation - the system has been switched
-        next()
-        return
-      } catch (error) {
-        console.error('Failed to switch systems:', error)
-        
-        // If switch fails completely, just continue anyway
-        // The app will handle the mismatch appropriately
-        next()
-        return
-      }
-    }
+    // Just accept whatever contextId is in the URL
+    // The components will handle loading data for that context
+    // No need to force system switching here
   }
 
   next()

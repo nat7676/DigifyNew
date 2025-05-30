@@ -235,13 +235,18 @@ const loadDashboardData = async () => {
       console.log('No layout found, using default dashboard data')
     }
     
-    // If we have a contextId, we might need to switch system context
+    // If we have a contextId, use it for loading system-specific data
     if (contextId.value) {
-      // Update the system store with the context ID
-      systemStore.setCurrentSystemId(parseInt(contextId.value))
+      const systemId = parseInt(contextId.value)
       
-      // TODO: Load context-specific data
-      console.log('Loading context-specific data for:', contextId.value)
+      // Update the system store with the context ID
+      systemStore.setCurrentSystemId(systemId)
+      
+      // Load context-specific data
+      console.log('Loading context-specific data for system:', systemId)
+      
+      // Note: The actual data loading would happen here based on the contextId
+      // For now, we're just using mock data
     }
     
     loading.value = false
@@ -261,12 +266,25 @@ const uploadDocument = () => {
 }
 
 // Watch for context ID changes
-watch(contextId, (newContextId, oldContextId) => {
+watch(contextId, async (newContextId, oldContextId) => {
   if (newContextId && newContextId !== oldContextId) {
     console.log('Context ID changed from', oldContextId, 'to', newContextId)
+    
+    // Update the system store with the new context
+    const newSystemId = parseInt(newContextId)
+    if (newSystemId !== authStore.currentSystemId) {
+      // Try to switch systems if needed
+      try {
+        await authStore.switchSystem(newSystemId)
+      } catch (error) {
+        console.warn('Could not switch to system', newSystemId, '- will load data anyway')
+      }
+    }
+    
+    // Always reload the dashboard data for the new context
     loadDashboardData()
   }
-})
+}, { immediate: false })
 
 // Lifecycle
 onMounted(() => {
