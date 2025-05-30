@@ -86,8 +86,43 @@ router.beforeEach(async (to, _from, next) => {
 
   // Check if user is trying to access login while authenticated
   if (to.path === '/login' && authStore.isAuthenticated) {
-    next('/insight/dashboard')
+    // Get contextId from current token or default to current system
+    const contextId = authStore.currentToken?.systemid || 1
+    next(`/insight/dashboard?contextId=${contextId}`)
     return
+  }
+
+  // For authenticated routes, ensure contextId is present
+  if (requiresAuth && authStore.isAuthenticated) {
+    const contextId = to.query.contextId as string
+    const currentSystemId = authStore.currentToken?.systemid
+    
+    // If no contextId in URL, add it
+    if (!contextId) {
+      next({
+        ...to,
+        query: { ...to.query, contextId: currentSystemId || 1 }
+      })
+      return
+    }
+    
+    // If contextId doesn't match current system, switch systems
+    const requestedSystemId = parseInt(contextId)
+    if (currentSystemId && requestedSystemId !== currentSystemId) {
+      console.log('System mismatch detected. Current:', currentSystemId, 'Requested:', requestedSystemId)
+      
+      try {
+        // Switch to the requested system
+        await authStore.switchSystem(requestedSystemId)
+        console.log('Successfully switched to system:', requestedSystemId)
+      } catch (error) {
+        console.error('Failed to switch systems:', error)
+        // If switch fails, redirect to login
+        authStore.setRedirectUrl(to.fullPath)
+        next('/login')
+        return
+      }
+    }
   }
 
   // TODO: Check permissions based on user roles

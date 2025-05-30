@@ -274,15 +274,98 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const switchSystem = async (systemId: number) => {
-    currentSystemId.value = systemId
-    const token = accessTokens.value[systemId]
+    // Check if we already have a valid token for this system
+    const existingToken = accessTokens.value[systemId]
+    if (existingToken && existingToken.expire > Date.now() / 1000) {
+      // Token exists and is valid, just switch to it
+      currentSystemId.value = systemId
+      
+      // Update user info from the token
+      user.value = {
+        userid: existingToken.userid,
+        systemid: existingToken.systemid,
+        PortalID: existingToken.PortalID,
+        AccessLevelID: existingToken.AccessLevelID,
+        roles: existingToken.roles,
+        name: existingToken.userProfile?.Name || '',
+        email: existingToken.userProfile?.Email || '',
+        profileImage: existingToken.userProfile?.ProfileImage || ''
+      }
+      
+      // Send AccessToken to all sockets for the new system
+      try {
+        await socketService.sendRequest(NodeEvent.AccessToken, {
+          AccessToken: existingToken.AccessToken,
+          LatestChatMsg: new Date(),
+          SessionID: existingToken.SessionID
+        })
+        console.log('✅ Switched system - AccessToken sent to all connected sockets')
+      } catch (error) {
+        console.error('Failed to send AccessToken to sockets:', error)
+      }
+      
+      // Fetch user data for the new system
+      try {
+        const response = await socketService.sendRequest(NodeEvent.Api, {
+          path: '/logininfo',
+          data: {},
+          settings: {}
+        })
+        
+        if (response.ApiResp?.tables?.[0]?.rows?.length > 0) {
+          const userData = response.ApiResp.tables[0].rows[0]
+          if (userData.UniqueSystemKey) {
+            const { default: templateService } = await import('@/services/template.service')
+            templateService.setSystemUniqueKey(userData.UniqueSystemKey)
+            console.log('Updated UniqueSystemKey for system', systemId)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch user data for new system:', error)
+      }
+      
+      return
+    }
     
-    if (token) {
-      // Socket service handles auth headers internally
-    } else {
-      // Need to get token for this system
-      // TODO: Implement system switch API call
-      console.log('Would fetch token for system:', systemId)
+    // We need to get a new token for this system
+    console.log('Need to fetch token for system:', systemId)
+    
+    // Get the current token's refresh token
+    const currentTok = currentToken.value
+    if (!currentTok) {
+      throw new Error('No current token to use for system switch')
+    }
+    
+    const refreshTokenValue = localStorage.getItem(`refreshToken_${currentSystemId.value}`) || 
+                             currentTok.userProfile?.RefreshToken || 
+                             currentTok.AccessToken
+    
+    try {
+      // Call API to get new token for the requested system
+      // Note: This assumes the server has an endpoint to switch systems using refresh token
+      const response = await socketService.sendRequest(NodeEvent.Api, {
+        path: '/auth/switchSystem',
+        data: {
+          refreshToken: refreshTokenValue,
+          targetSystemId: systemId
+        },
+        settings: {}
+      })
+      
+      if (response.ApiResp?.AccessToken) {
+        // Create new token object
+        const newToken: AccessTokenInterface = response.ApiResp
+        
+        // Store the new token
+        await setToken(systemId, newToken)
+        
+        console.log('✅ Successfully switched to system:', systemId)
+      } else {
+        throw new Error('No token returned from system switch')
+      }
+    } catch (error) {
+      console.error('Failed to switch systems:', error)
+      throw error
     }
   }
 

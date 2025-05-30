@@ -223,8 +223,9 @@ const handleLogin = async () => {
     console.log('Current route:', router.currentRoute.value.path)
     console.log('Is authenticated:', authStore.isAuthenticated)
     
-    // Use Vue Router navigation
-    await router.push('/insight/dashboard')
+    // Use Vue Router navigation with contextId
+    const systemId = authStore.currentToken?.systemid || 1
+    await router.push({ path: '/insight/dashboard', query: { contextId: systemId } })
   } catch (error: any) {
     console.error('Login failed:', error)
     

@@ -12,17 +12,17 @@
           <v-list-item
             prepend-icon="mdi-home"
             title="Dashboard"
-            to="/insight/dashboard"
+            :to="{ path: '/insight/dashboard', query: { contextId: currentSystemId } }"
           />
           <v-list-item
             prepend-icon="mdi-account"
             title="Profile"
-            to="/profile"
+            :to="{ path: '/profile', query: { contextId: currentSystemId } }"
           />
           <v-list-item
             prepend-icon="mdi-cog"
             title="Settings"
-            to="/settings"
+            :to="{ path: '/settings', query: { contextId: currentSystemId } }"
           />
         </v-list>
       </v-navigation-drawer>
@@ -137,6 +137,7 @@ const loading = ref(false)
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const user = computed(() => authStore.user)
 const snackbar = computed(() => uiStore.snackbar)
+const currentSystemId = computed(() => authStore.currentToken?.systemid || 1)
 
 // Methods
 const logout = async () => {
