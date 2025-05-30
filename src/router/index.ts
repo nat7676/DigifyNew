@@ -80,6 +80,8 @@ router.beforeEach(async (to, from, next) => {
 
   // Check authentication first
   if (requiresAuth && !authStore.isAuthenticated) {
+    console.log('User not authenticated, saving redirect URL:', to.fullPath)
+    // Save the full path including query parameters
     authStore.setRedirectUrl(to.fullPath)
     next('/login')
     return
@@ -89,7 +91,9 @@ router.beforeEach(async (to, from, next) => {
   if (to.path === '/login' && authStore.isAuthenticated) {
     // Check if we have a stored redirect URL (which might have a different contextId)
     const redirectUrl = authStore.redirectUrl
+    console.log('User authenticated at login, checking redirectUrl:', redirectUrl)
     if (redirectUrl) {
+      console.log('Found redirectUrl, navigating to:', redirectUrl)
       authStore.setRedirectUrl(null) // Clear it
       next(redirectUrl)
       return
@@ -107,6 +111,14 @@ router.beforeEach(async (to, from, next) => {
     
     // If no contextId in URL, add it
     if (!contextId) {
+      // Special case: if this is the initial navigation and the path contains contextId
+      // (user is entering URL directly), preserve it
+      if (from.fullPath === '/' && to.fullPath.includes('contextId=')) {
+        console.log('Initial navigation with contextId, preserving URL:', to.fullPath)
+        next()
+        return
+      }
+      
       // Try to get contextId from: URL -> current route -> auth store -> default
       const currentContextId = from.query.contextId || 
                               authStore.currentSystemId || 

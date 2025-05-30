@@ -257,8 +257,7 @@ export const useAuthStore = defineStore('auth', () => {
         // Don't throw - authentication might still work on some servers
       }
 
-      // Clear any redirect URL
-      redirectUrl.value = null
+      // Don't clear redirect URL here - let the router/component handle it
     } catch (error: any) {
       console.error('Login failed:', error)
       throw error
