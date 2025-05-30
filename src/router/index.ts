@@ -76,41 +76,44 @@ router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   const requiresAuth = to.meta.requiresAuth !== false
 
-  // Check if route requires authentication
+  console.log(`🔄 Navigation: ${from.fullPath} -> ${to.fullPath}`)
+
+  // Check authentication first
   if (requiresAuth && !authStore.isAuthenticated) {
-    // Store intended destination
     authStore.setRedirectUrl(to.fullPath)
     next('/login')
     return
   }
 
-  // Check if user is trying to access login while authenticated
+  // Redirect authenticated users away from login
   if (to.path === '/login' && authStore.isAuthenticated) {
-    // Get contextId from current token or default to current system
     const contextId = authStore.currentToken?.systemid || 1
     next(`/insight/dashboard?contextId=${contextId}`)
     return
   }
 
-  // For authenticated routes, ensure contextId is present
-  if (requiresAuth && authStore.isAuthenticated) {
+  // For authenticated routes, ensure contextId is present in the URL
+  if (requiresAuth && authStore.isAuthenticated && to.path !== '/login') {
     const contextId = to.query.contextId as string
     
-    // If no contextId in URL, add it from the current system
+    // If no contextId in URL, add it
     if (!contextId) {
-      const currentSystemId = authStore.currentSystemId || authStore.currentToken?.systemid || 1
+      // Try to get contextId from: URL -> current route -> auth store -> default
+      const currentContextId = from.query.contextId || 
+                              authStore.currentSystemId || 
+                              authStore.currentToken?.systemid || 
+                              1
+      
+      console.log('Adding missing contextId:', currentContextId)
       next({
         ...to,
-        query: { ...to.query, contextId: currentSystemId }
+        query: { ...to.query, contextId: currentContextId }
       })
       return
     }
-    
-    // Just accept whatever contextId is in the URL
-    // The components will handle loading data for that context
-    // No need to force system switching here
   }
 
+  // Allow navigation
   next()
 })
 

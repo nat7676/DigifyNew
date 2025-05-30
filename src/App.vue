@@ -12,20 +12,20 @@
           <v-list-item
             prepend-icon="mdi-home"
             title="Dashboard"
-            :to="{ path: '/insight/dashboard', query: { contextId: currentSystemId } }"
+            @click="navigateTo('/insight/dashboard')"
           />
           <v-list-item
             prepend-icon="mdi-account"
             title="Profile"
-            :to="{ path: '/profile', query: { contextId: currentSystemId } }"
+            @click="navigateTo('/profile')"
           />
           <v-list-item
             prepend-icon="mdi-cog"
             title="Settings"
-            :to="{ path: '/settings', query: { contextId: currentSystemId } }"
+            @click="navigateTo('/settings')"
           />
         </v-list>
-      </v-navigation-drawer>
+        </v-navigation-drawer>
 
       <!-- App Bar -->
       <v-app-bar
@@ -140,6 +140,18 @@ const snackbar = computed(() => uiStore.snackbar)
 const currentSystemId = computed(() => authStore.currentSystemId || 1)
 
 // Methods
+const navigateTo = (path: string) => {
+  // Get the current contextId from the URL
+  const currentRoute = router.currentRoute.value
+  const contextId = currentRoute.query.contextId || authStore.currentSystemId || 1
+  
+  // Navigate preserving the contextId
+  router.push({
+    path,
+    query: { contextId }
+  })
+}
+
 const logout = async () => {
   loading.value = true
   try {
