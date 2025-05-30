@@ -71,9 +71,6 @@ const router = createRouter({
   }
 })
 
-// Track if we're currently switching systems to prevent redirect loops
-let isSystemSwitching = false
-
 // Navigation guards
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
@@ -98,7 +95,7 @@ router.beforeEach(async (to, from, next) => {
   // For authenticated routes, ensure contextId is present
   if (requiresAuth && authStore.isAuthenticated) {
     const contextId = to.query.contextId as string
-    const currentSystemId = authStore.currentToken?.systemid
+    const currentSystemId = authStore.currentSystemId
     
     // If no contextId in URL, add it
     if (!contextId) {
@@ -109,53 +106,41 @@ router.beforeEach(async (to, from, next) => {
       return
     }
     
-    // If contextId doesn't match current system and we're not already switching, switch systems
+    // Parse the requested system ID
     const requestedSystemId = parseInt(contextId)
-    if (currentSystemId && requestedSystemId !== currentSystemId && !isSystemSwitching) {
+    
+    // Check if this is the same navigation we just processed
+    // This happens when we change the query params
+    if (to.path === from.path && 
+        to.query.contextId === from.query.contextId &&
+        JSON.stringify(to.params) === JSON.stringify(from.params)) {
+      // Same route, just let it through
+      next()
+      return
+    }
+    
+    // If contextId doesn't match current system, switch systems
+    if (requestedSystemId !== currentSystemId) {
       console.log('System mismatch detected. Current:', currentSystemId, 'Requested:', requestedSystemId)
-      
-      // Set flag to prevent loops
-      isSystemSwitching = true
       
       try {
         // Switch to the requested system
         await authStore.switchSystem(requestedSystemId)
         console.log('Successfully switched to system:', requestedSystemId)
         
-        // Reset flag
-        isSystemSwitching = false
-        
-        // Continue with navigation
+        // Continue with navigation - the system has been switched
         next()
         return
       } catch (error) {
         console.error('Failed to switch systems:', error)
         
-        // Reset flag
-        isSystemSwitching = false
-        
-        // If switch fails, stay on current system
-        // Don't redirect to login unless it's a critical error
-        if (error.message?.includes('No current token')) {
-          authStore.setRedirectUrl(to.fullPath)
-          next('/login')
-        } else {
-          // Stay on current page with current contextId
-          next({
-            ...to,
-            query: { ...to.query, contextId: currentSystemId }
-          })
-        }
+        // If switch fails completely, just continue anyway
+        // The app will handle the mismatch appropriately
+        next()
         return
       }
     }
   }
-
-  // TODO: Check permissions based on user roles
-  // if (to.meta.roles && !authStore.hasRoles(to.meta.roles)) {
-  //   next('/unauthorized')
-  //   return
-  // }
 
   next()
 })

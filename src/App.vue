@@ -137,7 +137,7 @@ const loading = ref(false)
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const user = computed(() => authStore.user)
 const snackbar = computed(() => uiStore.snackbar)
-const currentSystemId = computed(() => authStore.currentToken?.systemid || 1)
+const currentSystemId = computed(() => authStore.currentSystemId || 1)
 
 // Methods
 const logout = async () => {

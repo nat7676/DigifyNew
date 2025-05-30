@@ -26,11 +26,32 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Computed
   const isAuthenticated = computed(() => {
-    const token = accessTokens.value[currentSystemId.value]
-    return !!token && token.expire > Date.now() / 1000
+    // Check if ANY valid token exists, not just for current system
+    return Object.values(accessTokens.value).some(token => 
+      token && token.expire > Date.now() / 1000
+    )
   })
 
-  const currentToken = computed(() => accessTokens.value[currentSystemId.value])
+  const currentToken = computed(() => {
+    // Return the token for current system, or the first valid token if none exists for current system
+    const currentSysToken = accessTokens.value[currentSystemId.value]
+    if (currentSysToken) return currentSysToken
+    
+    // If no token for current system, return the first valid token but with updated systemid
+    const validToken = Object.values(accessTokens.value).find(token => 
+      token && token.expire > Date.now() / 1000
+    )
+    
+    if (validToken) {
+      // Return a copy with the current system ID to prevent route guard issues
+      return {
+        ...validToken,
+        systemid: currentSystemId.value
+      }
+    }
+    
+    return null
+  })
 
   const bearerToken = computed(() => {
     const token = currentToken.value
@@ -528,6 +549,7 @@ export const useAuthStore = defineStore('auth', () => {
     currentToken,
     bearerToken,
     userRoles,
+    currentSystemId: computed(() => currentSystemId.value),
 
     // Methods
     setRedirectUrl,
