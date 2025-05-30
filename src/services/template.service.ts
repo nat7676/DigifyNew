@@ -50,33 +50,23 @@ class TemplateService {
 
       console.log('Full portal response:', response)
       
-      // The actual data might be in response.TemplateCacheResp or response.TemplateCachePortal
-      const templateData = response.TemplateCacheResp || response.TemplateCachePortal || response
+      // The portal data is returned directly in TemplateCacheResp
+      const portal = response.TemplateCacheResp
 
-      console.log('Template data:', templateData)
+      console.log('Portal data:', portal)
 
-      // Handle both array and single object responses
-      if (templateData) {
-        let portal = null
+      // Check if we have valid portal data
+      if (portal && portal.UniqueKey && portal.PortalID) {
+        // Store in cache
+        templateCache.set(cacheKey, portal)
         
-        if (Array.isArray(templateData) && templateData.length > 0) {
-          portal = templateData[0]
-        } else if (typeof templateData === 'object' && !Array.isArray(templateData) && templateData.UniqueKey) {
-          portal = templateData
-        }
+        // Store the portal unique key and ID for layout requests
+        portalUniqueKey = portal.UniqueKey
+        portalID = portal.PortalID
+        console.log('Stored portal UniqueKey:', portalUniqueKey)
+        console.log('Stored portal PortalID:', portalID)
         
-        if (portal) {
-          templateCache.set(cacheKey, portal)
-          
-          // Store the portal unique key and ID for layout requests
-          portalUniqueKey = portal.UniqueKey
-          portalID = portal.PortalID
-          console.log('Stored portal UniqueKey:', portalUniqueKey)
-          console.log('Stored portal PortalID:', portalID)
-          console.log('Portal data:', portal)
-          
-          return portal
-        }
+        return portal
       }
       
       console.log('No valid portal data found in response')
@@ -168,18 +158,29 @@ class TemplateService {
       
       console.log('Layout response:', response)
       
-      // The actual data might be in response.TemplateCacheResp
-      const templateData = response.TemplateCacheResp || response
+      // The layout data should be in response.TemplateCacheResp
+      const layoutData = response.TemplateCacheResp
 
-      if (templateData && Array.isArray(templateData) && templateData.length > 0) {
-        // Return the most specific layout found (last in array)
-        const layout = templateData[templateData.length - 1]
-        
-        try {
-          return JSON.parse(layout.Content)
-        } catch (error) {
-          console.error('Failed to parse layout JSON:', error)
-          return null
+      // Layout responses can be an array of layouts (from most to least specific)
+      if (layoutData) {
+        if (Array.isArray(layoutData) && layoutData.length > 0) {
+          // Return the most specific layout found (last in array)
+          const layout = layoutData[layoutData.length - 1]
+          
+          try {
+            return JSON.parse(layout.Content)
+          } catch (error) {
+            console.error('Failed to parse layout JSON:', error)
+            return null
+          }
+        } else if (layoutData.Content) {
+          // Single layout response
+          try {
+            return JSON.parse(layoutData.Content)
+          } catch (error) {
+            console.error('Failed to parse layout JSON:', error)
+            return null
+          }
         }
       }
 
