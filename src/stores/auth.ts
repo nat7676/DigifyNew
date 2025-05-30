@@ -24,6 +24,15 @@ export const useAuthStore = defineStore('auth', () => {
   // Token refresh timer
   let tokenRefreshTimer: number | null = null
 
+  // Generate unique GUID
+  function generateGuid(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0
+      const v = c === 'x' ? r : (r & 0x3) | 0x8
+      return v.toString(16)
+    })
+  }
+
   // Computed
   const isAuthenticated = computed(() => {
     // Check if ANY valid token exists, not just for current system
@@ -72,7 +81,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // Methods
-  const setRedirectUrl = (url: string) => {
+  const setRedirectUrl = (url: string | null) => {
     redirectUrl.value = url
   }
 
@@ -351,32 +360,61 @@ export const useAuthStore = defineStore('auth', () => {
     // We need to get a new token for this system
     console.log('Need to fetch token for system:', systemId)
     
-    // For now, since the server might not support system switching via API,
-    // we'll just update the current system ID and let the user know they need to re-authenticate
-    console.warn('System switching to new systems not yet implemented. User may need to re-login for this system.')
-    
-    // Update the current system ID anyway to prevent redirect loops
-    currentSystemId.value = systemId
-    
-    // Try to proceed with the current token, but this might fail for API calls
-    // The server should handle the mismatch and return appropriate errors
-    
-    // Still send the AccessToken to update the sockets
-    const currentTok = currentToken.value
-    if (currentTok) {
-      try {
-        await socketService.sendRequest(NodeEvent.AccessToken, {
-          AccessToken: currentTok.AccessToken,
-          LatestChatMsg: new Date(),
-          SessionID: currentTok.SessionID
-        })
-      } catch (error) {
-        console.error('Failed to send AccessToken to sockets:', error)
+    try {
+      // Call the setgroup API to switch systems
+      const response = await socketService.sendRequest(NodeEvent.Api, {
+        path: `/Module/setgroup/${systemId}`,
+        data: {},
+        settings: {}
+      })
+      
+      console.log('System switch response:', response)
+      
+      if (response.ApiResp?.tables?.[0]?.rows?.[0]?.AccessToken) {
+        const tokenData = response.ApiResp.tables[0].rows[0]
+        const accessTokenStr = tokenData.AccessToken
+        const refreshToken = tokenData.RefreshToken
+        
+        // Decode the access token (it's base64 encoded JSON)
+        const tokenPayload = JSON.parse(atob(accessTokenStr.split('.')[0] || accessTokenStr))
+        console.log('Decoded token payload:', tokenPayload)
+        
+        // The token might be an array, get the first element
+        const tokenInfo = Array.isArray(tokenPayload) ? tokenPayload[0] : tokenPayload
+        
+        // Create a new AccessTokenInterface object
+        const newToken: AccessTokenInterface = {
+          AccessToken: accessTokenStr,
+          SessionID: generateGuid(), // Generate a new session ID
+          systemid: tokenInfo.systemid,
+          userid: tokenInfo.userid,
+          expire: tokenInfo.expire,
+          expiredate: new Date(tokenInfo.expire * 1000).toISOString(),
+          PortalID: tokenInfo.PortalID,
+          AccessLevelID: tokenInfo.AccessLevelID,
+          roles: tokenInfo.roles || {},
+          userProfile: {
+            // Keep existing profile data but update with new token info
+            ...(currentToken.value?.userProfile || {}),
+            RefreshToken: refreshToken
+          }
+        }
+        
+        // Store the new token
+        await setToken(systemId, newToken)
+        
+        console.log('✅ Successfully switched to system:', systemId)
+      } else {
+        throw new Error('No access token returned from setgroup API')
       }
+    } catch (error) {
+      console.error('Failed to switch systems:', error)
+      
+      // Update the current system ID anyway to prevent redirect loops
+      currentSystemId.value = systemId
+      
+      // Don't throw - let the UI handle the error gracefully
     }
-    
-    // Don't throw an error here to prevent redirect loops
-    // The UI should handle the case where the user doesn't have access to the requested system
   }
 
   const updateLastActivity = () => {
@@ -550,6 +588,7 @@ export const useAuthStore = defineStore('auth', () => {
     bearerToken,
     userRoles,
     currentSystemId: computed(() => currentSystemId.value),
+    redirectUrl: computed(() => redirectUrl.value),
 
     // Methods
     setRedirectUrl,

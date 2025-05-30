@@ -87,6 +87,15 @@ router.beforeEach(async (to, from, next) => {
 
   // Redirect authenticated users away from login
   if (to.path === '/login' && authStore.isAuthenticated) {
+    // Check if we have a stored redirect URL (which might have a different contextId)
+    const redirectUrl = authStore.redirectUrl
+    if (redirectUrl) {
+      authStore.setRedirectUrl(null) // Clear it
+      next(redirectUrl)
+      return
+    }
+    
+    // Otherwise use default
     const contextId = authStore.currentToken?.systemid || 1
     next(`/insight/dashboard?contextId=${contextId}`)
     return

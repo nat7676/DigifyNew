@@ -223,9 +223,17 @@ const handleLogin = async () => {
     console.log('Current route:', router.currentRoute.value.path)
     console.log('Is authenticated:', authStore.isAuthenticated)
     
-    // Use Vue Router navigation with contextId
-    const systemId = authStore.currentToken?.systemid || 1
-    await router.push({ path: '/insight/dashboard', query: { contextId: systemId } })
+    // Check if we have a redirect URL to go back to
+    const redirectUrl = authStore.redirectUrl
+    if (redirectUrl) {
+      console.log('Redirecting to stored URL:', redirectUrl)
+      authStore.setRedirectUrl(null) // Clear it
+      await router.push(redirectUrl)
+    } else {
+      // Use default navigation with contextId
+      const systemId = authStore.currentToken?.systemid || 1
+      await router.push({ path: '/insight/dashboard', query: { contextId: systemId } })
+    }
   } catch (error: any) {
     console.error('Login failed:', error)
     
