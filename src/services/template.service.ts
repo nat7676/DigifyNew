@@ -24,9 +24,11 @@ class TemplateService {
    * Get portal settings for a domain
    */
   async getPortalSettings(domain: string): Promise<TemplateCachePortal | null> {
-    const cacheKey = `portal:${domain}`
+    // For localhost development, use the configured development domain
+    const actualDomain = domain === 'localhost' ? 'my.digify.no' : domain
+    const cacheKey = `portal:${actualDomain}`
     
-    console.log('Getting portal settings for domain:', domain)
+    console.log('Getting portal settings for domain:', actualDomain, '(requested:', domain, ')')
     
     // Check cache first
     if (templateCache.has(cacheKey)) {
@@ -37,7 +39,7 @@ class TemplateService {
     try {
       const request: TemplateCacheType = {
         path: 'portal',
-        domain: domain, // Portal requests need the domain
+        domain: actualDomain, // Use the actual domain, not localhost
         uniqueKeys: []
       }
       
@@ -71,41 +73,32 @@ class TemplateService {
       
       console.log('No valid portal data found in response')
       
-      // If localhost, try with a default domain
-      if (domain === 'localhost' && !templateCache.has(cacheKey + ':tried-default')) {
-        console.log('Trying with default domain for localhost...')
-        templateCache.set(cacheKey + ':tried-default', true)
-        const fallbackResult = await this.getPortalSettings('digify.no')
-        
-        // If still no result, use development defaults
-        if (!fallbackResult) {
-          console.log('Using development default portal settings')
-          const devPortal: TemplateCachePortal = {
-            UniqueKey: 'dev_portal_unique_key',
-            PortalID: 1,
-            SettingsJson: JSON.stringify({
-              DomainLogo: '/img/digify_favicon.png',
-              DomainName: 'Development Portal',
-              DomainColors: JSON.stringify({
-                primary: '#1976D2',
-                secondary: '#424242',
-                accent: '#82B1FF'
-              })
-            }),
-            CSS: ''
-          }
-          
-          // Cache and store the dev portal settings
-          templateCache.set(cacheKey, devPortal)
-          portalUniqueKey = devPortal.UniqueKey
-          portalID = devPortal.PortalID
-          console.log('Set development portal UniqueKey:', portalUniqueKey)
-          console.log('Set development portal PortalID:', portalID)
-          
-          return devPortal
+      // If no portal data found and we're in development, use development defaults
+      if (!portal && import.meta.env.DEV) {
+        console.log('Using development default portal settings')
+        const devPortal: TemplateCachePortal = {
+          UniqueKey: 'dev_portal_unique_key',
+          PortalID: 1,
+          SettingsJson: JSON.stringify({
+            DomainLogo: '/img/digify_favicon.png',
+            DomainName: 'Development Portal',
+            DomainColors: JSON.stringify({
+              primary: '#1976D2',
+              secondary: '#424242',
+              accent: '#82B1FF'
+            })
+          }),
+          CSS: ''
         }
         
-        return fallbackResult
+        // Cache and store the dev portal settings
+        templateCache.set(cacheKey, devPortal)
+        portalUniqueKey = devPortal.UniqueKey
+        portalID = devPortal.PortalID
+        console.log('Set development portal UniqueKey:', portalUniqueKey)
+        console.log('Set development portal PortalID:', portalID)
+        
+        return devPortal
       }
 
       return null
@@ -324,7 +317,9 @@ class TemplateService {
    * Load domain settings from localStorage with server fallback
    */
   async loadDomainSettings(domain: string): Promise<any> {
-    const storageKey = `IL_${domain}`
+    // Use the same domain mapping as getPortalSettings
+    const actualDomain = domain === 'localhost' ? 'my.digify.no' : domain
+    const storageKey = `IL_${actualDomain}`
     
     // Try localStorage first
     const stored = localStorage.getItem(storageKey)
@@ -337,7 +332,7 @@ class TemplateService {
     }
 
     // Fallback to server
-    const portal = await this.getPortalSettings(domain)
+    const portal = await this.getPortalSettings(domain) // This will handle the domain mapping
     if (portal) {
       try {
         const settings = JSON.parse(portal.SettingsJson)
