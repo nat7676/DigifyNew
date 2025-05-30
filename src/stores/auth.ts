@@ -330,43 +330,32 @@ export const useAuthStore = defineStore('auth', () => {
     // We need to get a new token for this system
     console.log('Need to fetch token for system:', systemId)
     
-    // Get the current token's refresh token
+    // For now, since the server might not support system switching via API,
+    // we'll just update the current system ID and let the user know they need to re-authenticate
+    console.warn('System switching to new systems not yet implemented. User may need to re-login for this system.')
+    
+    // Update the current system ID anyway to prevent redirect loops
+    currentSystemId.value = systemId
+    
+    // Try to proceed with the current token, but this might fail for API calls
+    // The server should handle the mismatch and return appropriate errors
+    
+    // Still send the AccessToken to update the sockets
     const currentTok = currentToken.value
-    if (!currentTok) {
-      throw new Error('No current token to use for system switch')
-    }
-    
-    const refreshTokenValue = localStorage.getItem(`refreshToken_${currentSystemId.value}`) || 
-                             currentTok.userProfile?.RefreshToken || 
-                             currentTok.AccessToken
-    
-    try {
-      // Call API to get new token for the requested system
-      // Note: This assumes the server has an endpoint to switch systems using refresh token
-      const response = await socketService.sendRequest(NodeEvent.Api, {
-        path: '/auth/switchSystem',
-        data: {
-          refreshToken: refreshTokenValue,
-          targetSystemId: systemId
-        },
-        settings: {}
-      })
-      
-      if (response.ApiResp?.AccessToken) {
-        // Create new token object
-        const newToken: AccessTokenInterface = response.ApiResp
-        
-        // Store the new token
-        await setToken(systemId, newToken)
-        
-        console.log('✅ Successfully switched to system:', systemId)
-      } else {
-        throw new Error('No token returned from system switch')
+    if (currentTok) {
+      try {
+        await socketService.sendRequest(NodeEvent.AccessToken, {
+          AccessToken: currentTok.AccessToken,
+          LatestChatMsg: new Date(),
+          SessionID: currentTok.SessionID
+        })
+      } catch (error) {
+        console.error('Failed to send AccessToken to sockets:', error)
       }
-    } catch (error) {
-      console.error('Failed to switch systems:', error)
-      throw error
     }
+    
+    // Don't throw an error here to prevent redirect loops
+    // The UI should handle the case where the user doesn't have access to the requested system
   }
 
   const updateLastActivity = () => {

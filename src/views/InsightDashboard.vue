@@ -261,8 +261,9 @@ const uploadDocument = () => {
 }
 
 // Watch for context ID changes
-watch(contextId, (newContextId) => {
-  if (newContextId) {
+watch(contextId, (newContextId, oldContextId) => {
+  if (newContextId && newContextId !== oldContextId) {
+    console.log('Context ID changed from', oldContextId, 'to', newContextId)
     loadDashboardData()
   }
 })

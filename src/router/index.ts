@@ -71,8 +71,11 @@ const router = createRouter({
   }
 })
 
+// Track if we're currently switching systems to prevent redirect loops
+let isSystemSwitching = false
+
 // Navigation guards
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   const requiresAuth = to.meta.requiresAuth !== false
 
@@ -106,20 +109,43 @@ router.beforeEach(async (to, _from, next) => {
       return
     }
     
-    // If contextId doesn't match current system, switch systems
+    // If contextId doesn't match current system and we're not already switching, switch systems
     const requestedSystemId = parseInt(contextId)
-    if (currentSystemId && requestedSystemId !== currentSystemId) {
+    if (currentSystemId && requestedSystemId !== currentSystemId && !isSystemSwitching) {
       console.log('System mismatch detected. Current:', currentSystemId, 'Requested:', requestedSystemId)
+      
+      // Set flag to prevent loops
+      isSystemSwitching = true
       
       try {
         // Switch to the requested system
         await authStore.switchSystem(requestedSystemId)
         console.log('Successfully switched to system:', requestedSystemId)
+        
+        // Reset flag
+        isSystemSwitching = false
+        
+        // Continue with navigation
+        next()
+        return
       } catch (error) {
         console.error('Failed to switch systems:', error)
-        // If switch fails, redirect to login
-        authStore.setRedirectUrl(to.fullPath)
-        next('/login')
+        
+        // Reset flag
+        isSystemSwitching = false
+        
+        // If switch fails, stay on current system
+        // Don't redirect to login unless it's a critical error
+        if (error.message?.includes('No current token')) {
+          authStore.setRedirectUrl(to.fullPath)
+          next('/login')
+        } else {
+          // Stay on current page with current contextId
+          next({
+            ...to,
+            query: { ...to.query, contextId: currentSystemId }
+          })
+        }
         return
       }
     }
