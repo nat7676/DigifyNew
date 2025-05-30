@@ -396,12 +396,11 @@ export const useAuthStore = defineStore('auth', () => {
           PortalID: decodedToken.PortalID,
           AccessLevelID: decodedToken.AccessLevelID,
           roles: decodedToken.roles || {},
-          rid: decodedToken.rid,
-          userProfile: {
+          userProfile: currentToken.value?.userProfile ? {
             // Keep existing profile data but update with new token info
-            ...(currentToken.value?.userProfile || {}),
+            ...currentToken.value.userProfile,
             RefreshToken: refreshToken
-          }
+          } : undefined
         }
         
         // Store the new token

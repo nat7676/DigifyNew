@@ -281,7 +281,7 @@ watch(contextId, async (newContextId, oldContextId) => {
       } catch (error) {
         console.error('Failed to switch to system', newSystemId, error)
         // Show error to user
-        uiStore.showSnackbar(`Failed to switch to system ${newSystemId}. You may not have access.`, 'error')
+        uiStore.showError(`Failed to switch to system ${newSystemId}. You may not have access.`)
         
         // Redirect back to the current system
         router.push({
