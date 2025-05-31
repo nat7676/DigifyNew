@@ -137,12 +137,16 @@ import { useAuthStore } from '@/stores/auth'
 import { useSystemStore } from '@/stores/system'
 import { useUIStore } from '@/stores/ui'
 import templateService from '@/services/template.service'
+import { useSystemContext } from '@/composables/useSystemContext'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const systemStore = useSystemStore()
 const uiStore = useUIStore()
+
+// Handle system context switching
+useSystemContext()
 
 // State
 const loading = ref(true)
@@ -266,34 +270,12 @@ const uploadDocument = () => {
   uiStore.showSnackbar('Upload document feature coming soon')
 }
 
-// Watch for context ID changes
+// Watch for context ID changes to reload data
 watch(contextId, async (newContextId, oldContextId) => {
-  console.log('🔍 ContextId watcher fired - old:', oldContextId, 'new:', newContextId)
   if (newContextId && newContextId !== oldContextId) {
-    console.log('Context ID changed from', oldContextId, 'to', newContextId)
-    
-    // Update the system store with the new context
-    const newSystemId = parseInt(newContextId)
-    if (newSystemId !== authStore.currentSystemId) {
-      // Try to switch systems if needed
-      try {
-        await authStore.switchSystem(newSystemId)
-        console.log('Successfully switched to system:', newSystemId)
-      } catch (error) {
-        console.error('Failed to switch to system', newSystemId, error)
-        // Show error to user
-        uiStore.showError(`Failed to switch to system ${newSystemId}. You may not have access.`)
-        
-        // Redirect back to the current system
-        router.push({
-          path: route.path,
-          query: { ...route.query, contextId: authStore.currentSystemId?.toString() }
-        })
-        return
-      }
-    }
-    
-    // Always reload the dashboard data for the new context
+    console.log('Context ID changed, reloading dashboard data')
+    // System switching is handled by useSystemContext composable
+    // Just reload the dashboard data for the new context
     loadDashboardData()
   }
 }, { immediate: false })
@@ -301,30 +283,7 @@ watch(contextId, async (newContextId, oldContextId) => {
 // Lifecycle
 onMounted(async () => {
   console.log('InsightDashboard mounted with query:', route.query)
-  
-  // Check if we need to switch systems on mount
-  const requestedContextId = route.query.contextId as string
-  if (requestedContextId) {
-    const requestedSystemId = parseInt(requestedContextId)
-    if (requestedSystemId && requestedSystemId !== authStore.currentSystemId) {
-      console.log('📍 On mount: need to switch from system', authStore.currentSystemId, 'to', requestedSystemId)
-      try {
-        await authStore.switchSystem(requestedSystemId)
-        console.log('Successfully switched to system:', requestedSystemId)
-      } catch (error) {
-        console.error('Failed to switch to system', requestedSystemId, error)
-        uiStore.showError(`Failed to switch to system ${requestedSystemId}. You may not have access.`)
-        
-        // Redirect back to the current system
-        router.push({
-          path: route.path,
-          query: { ...route.query, contextId: authStore.currentSystemId?.toString() }
-        })
-        return
-      }
-    }
-  }
-  
+  // System switching is handled by useSystemContext composable
   loadDashboardData()
 })
 </script>

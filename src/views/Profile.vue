@@ -227,8 +227,12 @@ import { useAuthStore } from '@/stores/auth'
 import socketService from '@/services/socket.service'
 import templateService from '@/services/template.service'
 import { NodeEvent } from '@/modules/shared/shared'
+import { useSystemContext } from '@/composables/useSystemContext'
 
 const authStore = useAuthStore()
+
+// Handle system context switching
+useSystemContext()
 
 // State
 const loading = ref(false)
