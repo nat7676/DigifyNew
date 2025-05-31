@@ -19,6 +19,7 @@ declare global {
   const useAuthStore: typeof import('./stores/index')['useAuthStore']
   const useRoute: typeof import('vue-router')['useRoute']
   const useRouter: typeof import('vue-router')['useRouter']
+  const useSystemContext: typeof import('./composables/useSystemContext')['useSystemContext']
   const useSystemStore: typeof import('./stores/system')['useSystemStore']
   const useUIStore: typeof import('./stores/ui')['useUIStore']
   const watch: typeof import('vue')['watch']
@@ -43,6 +44,7 @@ declare module 'vue' {
     readonly useAuthStore: UnwrapRef<typeof import('./stores/index')['useAuthStore']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
+    readonly useSystemContext: UnwrapRef<typeof import('./composables/useSystemContext')['useSystemContext']>
     readonly useSystemStore: UnwrapRef<typeof import('./stores/system')['useSystemStore']>
     readonly useUIStore: UnwrapRef<typeof import('./stores/ui')['useUIStore']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>

@@ -111,7 +111,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const setToken = async (systemId: number, token: AccessTokenInterface) => {
+  const setToken = async (systemId: number, token: AccessTokenInterface, skipLoginInfo = false) => {
     console.log('Setting token for system:', systemId, token)
     currentSystemId.value = systemId
     accessTokens.value[systemId] = token
@@ -124,6 +124,12 @@ export const useAuthStore = defineStore('auth', () => {
     
     console.log('Current system ID:', currentSystemId.value)
     console.log('Is authenticated after token set:', isAuthenticated.value)
+    
+    // Skip logininfo call if requested (e.g., during system switch)
+    if (skipLoginInfo) {
+      console.log('Skipping logininfo call')
+      return
+    }
     
     // Fetch user data to get UniqueSystemKey
     try {
@@ -405,10 +411,10 @@ export const useAuthStore = defineStore('auth', () => {
           } : undefined
         }
         
-        // Store the new token
-        await setToken(systemId, newToken)
+        // Store the new token (skip logininfo for now)
+        await setToken(systemId, newToken, true)
         
-        // Send the new AccessToken to all socket servers
+        // Send the new AccessToken to all socket servers FIRST
         console.log('📤 Sending new AccessToken to websocket servers')
         try {
           await socketService.sendRequest(NodeEvent.AccessToken, {
@@ -420,6 +426,40 @@ export const useAuthStore = defineStore('auth', () => {
         } catch (error) {
           console.error('Failed to send new AccessToken to sockets:', error)
           // Don't throw - the switch was successful, just log the error
+        }
+        
+        // Now fetch user data with the new system context
+        try {
+          const response = await socketService.sendRequest(NodeEvent.Api, {
+            path: '/logininfo',
+            data: {},
+            settings: {}
+          })
+          
+          if (response.ApiResp?.tables?.[0]?.rows?.length > 0) {
+            const userData = response.ApiResp.tables[0].rows[0]
+            console.log('User data after system switch:', userData)
+            
+            if (userData.UniqueSystemKey) {
+              const { default: templateService } = await import('@/services/template.service')
+              templateService.setSystemUniqueKey(userData.UniqueSystemKey)
+              console.log('Updated UniqueSystemKey for new system')
+            }
+            
+            // Update user info with fresh data
+            user.value = {
+              userid: newToken.userid,
+              systemid: newToken.systemid,
+              PortalID: newToken.PortalID,
+              AccessLevelID: newToken.AccessLevelID,
+              roles: newToken.roles,
+              name: userData.Name || newToken.userProfile?.Name || '',
+              email: userData.Email || newToken.userProfile?.Email || '',
+              profileImage: userData.ProfileImage || newToken.userProfile?.ProfileImage || ''
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch user data after system switch:', error)
         }
         
         console.log('✅ Successfully switched to system:', systemId)

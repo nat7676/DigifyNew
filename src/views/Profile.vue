@@ -111,7 +111,7 @@
               <v-list-item>
                 <v-list-item-title>Active System ID</v-list-item-title>
                 <template #append>
-                  <span class="text-body-2">{{ userProfile?.ActiveSystemID || 'N/A' }}</span>
+                  <span class="text-body-2">{{ userData?.ActiveSystemID || authStore.currentSystemId || 'N/A' }}</span>
                 </template>
               </v-list-item>
               <v-list-item v-if="userData">
@@ -221,7 +221,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 // Removed unused import
 import socketService from '@/services/socket.service'
@@ -323,6 +323,14 @@ const fetchPortalSettings = async () => {
     console.error('Failed to fetch portal settings:', error)
   }
 }
+
+// Watch for system changes and reload data
+watch(() => authStore.currentSystemId, async (newSystemId, oldSystemId) => {
+  if (newSystemId && newSystemId !== oldSystemId) {
+    console.log('System changed in Profile, reloading user data')
+    await fetchUserData()
+  }
+})
 
 // Lifecycle
 onMounted(async () => {
