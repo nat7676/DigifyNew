@@ -268,6 +268,7 @@ const uploadDocument = () => {
 
 // Watch for context ID changes
 watch(contextId, async (newContextId, oldContextId) => {
+  console.log('🔍 ContextId watcher fired - old:', oldContextId, 'new:', newContextId)
   if (newContextId && newContextId !== oldContextId) {
     console.log('Context ID changed from', oldContextId, 'to', newContextId)
     
@@ -298,8 +299,32 @@ watch(contextId, async (newContextId, oldContextId) => {
 }, { immediate: false })
 
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
   console.log('InsightDashboard mounted with query:', route.query)
+  
+  // Check if we need to switch systems on mount
+  const requestedContextId = route.query.contextId as string
+  if (requestedContextId) {
+    const requestedSystemId = parseInt(requestedContextId)
+    if (requestedSystemId && requestedSystemId !== authStore.currentSystemId) {
+      console.log('📍 On mount: need to switch from system', authStore.currentSystemId, 'to', requestedSystemId)
+      try {
+        await authStore.switchSystem(requestedSystemId)
+        console.log('Successfully switched to system:', requestedSystemId)
+      } catch (error) {
+        console.error('Failed to switch to system', requestedSystemId, error)
+        uiStore.showError(`Failed to switch to system ${requestedSystemId}. You may not have access.`)
+        
+        // Redirect back to the current system
+        router.push({
+          path: route.path,
+          query: { ...route.query, contextId: authStore.currentSystemId?.toString() }
+        })
+        return
+      }
+    }
+  }
+  
   loadDashboardData()
 })
 </script>

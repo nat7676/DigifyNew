@@ -303,6 +303,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const switchSystem = async (systemId: number) => {
+    console.log('🔄 switchSystem called with systemId:', systemId, 'current:', currentSystemId.value)
+    
     // Check if we already have a valid token for this system
     const existingToken = accessTokens.value[systemId]
     if (existingToken && existingToken.expire > Date.now() / 1000) {
@@ -361,6 +363,7 @@ export const useAuthStore = defineStore('auth', () => {
     
     try {
       // Call the setgroup API to switch systems
+      console.log('📤 Calling setgroup API for system:', systemId)
       const response = await socketService.sendRequest(NodeEvent.Api, {
         path: `/Module/setgroup/${systemId}`,
         data: {},
@@ -404,6 +407,20 @@ export const useAuthStore = defineStore('auth', () => {
         
         // Store the new token
         await setToken(systemId, newToken)
+        
+        // Send the new AccessToken to all socket servers
+        console.log('📤 Sending new AccessToken to websocket servers')
+        try {
+          await socketService.sendRequest(NodeEvent.AccessToken, {
+            AccessToken: newToken.AccessToken,
+            LatestChatMsg: new Date(),
+            SessionID: newToken.SessionID
+          })
+          console.log('✅ New AccessToken sent to all connected sockets')
+        } catch (error) {
+          console.error('Failed to send new AccessToken to sockets:', error)
+          // Don't throw - the switch was successful, just log the error
+        }
         
         console.log('✅ Successfully switched to system:', systemId)
       } else {
