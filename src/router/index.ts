@@ -42,8 +42,8 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
-    path: '/insight/dashboard',
-    name: 'insight-dashboard',
+    path: '/insight/:page*',
+    name: 'insight',
     component: () => import('@/views/InsightDashboard.vue'),
     meta: {
       requiresAuth: true

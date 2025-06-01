@@ -3,9 +3,9 @@
     <!-- Page Header -->
     <v-row class="mb-6">
       <v-col cols="12">
-        <h1 class="text-h4">Insight Dashboard</h1>
+        <h1 class="text-h4">{{ dashboardTitle }}</h1>
         <p class="text-body-1 text-medium-emphasis">
-          Context ID: {{ contextId || 'Not specified' }}
+          Context ID: {{ contextId || 'Not specified' }} | Type: {{ dashboardType }}
         </p>
       </v-col>
     </v-row>
@@ -161,8 +161,42 @@ const error = ref<string | null>(null)
 const dashboardData = ref<any>(null)
 const showDebug = ref(import.meta.env.DEV)
 
+// Layout type mapping
+const layoutTypeMap: Record<string, string> = {
+  dashboard: 'insightDashboard',
+  companies: 'companyDashboard',
+  contracts: 'contractDashboard',
+  documents: 'documentDashboard',
+  analytics: 'analyticsDashboard',
+  reports: 'reportsDashboard',
+  settings: 'settingsDashboard'
+}
+
 // Computed
 const contextId = computed(() => route.query.contextId as string || null)
+
+// Get the dashboard type from the route - defaults to 'dashboard' if not specified
+const dashboardType = computed(() => {
+  const page = route.params.page
+  if (Array.isArray(page)) {
+    return page.join('/') || 'dashboard'
+  }
+  return page || 'dashboard'
+})
+
+// Dashboard title based on type
+const dashboardTitle = computed(() => {
+  const titles: Record<string, string> = {
+    dashboard: 'Insight Dashboard',
+    companies: 'Company Overview',
+    contracts: 'Contract Management',
+    documents: 'Document Center',
+    analytics: 'Analytics Dashboard',
+    reports: 'Reports',
+    settings: 'Dashboard Settings'
+  }
+  return titles[dashboardType.value] || `${dashboardType.value.charAt(0).toUpperCase() + dashboardType.value.slice(1)} Dashboard`
+})
 
 // Mock data for now
 const contractItems = ref([
@@ -198,6 +232,7 @@ const stats = ref([
 
 const debugInfo = computed(() => ({
   contextId: contextId.value,
+  dashboardType: dashboardType.value,
   route: {
     path: route.path,
     query: route.query,
@@ -211,7 +246,8 @@ const debugInfo = computed(() => ({
   templateCache: {
     isLoading: loading.value,
     hasError: !!error.value,
-    hasDashboardData: !!dashboardData.value
+    hasDashboardData: !!dashboardData.value,
+    layoutType: layoutTypeMap[dashboardType.value] || dashboardType.value
   },
   dashboardData: dashboardData.value
 }))
@@ -229,11 +265,11 @@ const loadDashboardData = async () => {
     // Check if we have the system unique key (for debugging)
     console.log('System unique key:', templateService.getSystemUniqueKey())
     
-    // Get dashboard layout for insight dashboard
+    // Get dashboard layout for the specific dashboard type
+    const layoutType = layoutTypeMap[dashboardType.value] || dashboardType.value
+    
     // The template service will automatically use the current system's UniqueKey
-    const layout = await templateService.getDashboardLayout(
-      'insightDashboard' // layout type
-    )
+    const layout = await templateService.getDashboardLayout(layoutType)
     
     if (layout) {
       dashboardData.value = layout
@@ -281,6 +317,14 @@ watch(contextId, async (newContextId, oldContextId) => {
   if (newContextId && newContextId !== oldContextId) {
     // System switching is handled by useSystemContext composable
     // Just reload the dashboard data for the new context
+    loadDashboardData()
+  }
+}, { immediate: false })
+
+// Watch for dashboard type changes to reload data
+watch(dashboardType, async (newType, oldType) => {
+  if (newType !== oldType) {
+    console.log(`Dashboard type changed from ${oldType} to ${newType}`)
     loadDashboardData()
   }
 }, { immediate: false })

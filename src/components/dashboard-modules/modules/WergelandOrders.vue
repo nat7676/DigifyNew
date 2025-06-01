@@ -4,7 +4,7 @@
   >
     
     <v-card-text>
-    <pre>{{ data }}</pre>
+    <pre>{{ data.slice(0, 10) }}</pre>
     </v-card-text>
     
   </v-card>
