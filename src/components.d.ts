@@ -10,6 +10,7 @@ declare module 'vue' {
     DashboardColumn: typeof import('./components/dashboard-modules/DashboardColumn.vue')['default']
     DashboardElement: typeof import('./components/dashboard-modules/DashboardElement.vue')['default']
     DashboardLayout: typeof import('./components/dashboard-modules/DashboardLayout.vue')['default']
+    DashboardNotFound: typeof import('./components/dashboard-modules/DashboardNotFound.vue')['default']
     DashboardSection: typeof import('./components/dashboard-modules/DashboardSection.vue')['default']
     DebugToolbar: typeof import('./components/layout/DebugToolbar.vue')['default']
     DynamicMenu: typeof import('./components/layout/DynamicMenu.vue')['default']

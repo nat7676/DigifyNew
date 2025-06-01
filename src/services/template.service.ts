@@ -109,12 +109,42 @@ class TemplateService {
     
     // Generate unique keys using the same logic as the old system
     const uniqueKeys = this.getAllLayoutCacheKeys(layoutType, objectId)
+    console.log('getDashboardLayout:', { layoutType, objectId, uniqueKeys, systemUniqueKey, portalUniqueKey })
     
     // Restore original system key if we temporarily changed it
     if (useSystemKey) {
       systemUniqueKey = originalSystemKey
     }
     
+
+    // If no keys generated (no portal or system loaded yet), return not found layout
+    if (uniqueKeys.length === 0) {
+      console.log('No unique keys generated, returning DashboardNotFound layout')
+      return {
+        Desktop: [
+          {
+            uniqueid: 'section-not-found-1',
+            col: [
+              {
+                uniqueid: 'col-not-found-1',
+                md: 12,
+                elements: [
+                  {
+                    uniqueid: 'dashboard-not-found-1',
+                    element: 'DashboardNotFound',
+                    layoutType: layoutType,
+                    contextId: objectId,
+                    systemKey: systemUniqueKey,
+                    portalKey: portalUniqueKey,
+                    message: 'Portal settings not loaded yet'
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
 
     try {
       const request: TemplateCacheType = {
@@ -160,33 +190,59 @@ class TemplateService {
         }
       }
 
-      // If no layout found and we're in development, return a default layout
-      if (uniqueKeys.length === 0 || (portalUniqueKey && portalUniqueKey.startsWith('dev_'))) {
-        return {
-          sections: [
-            {
-              id: 'welcome',
-              title: 'Welcome to Insight Dashboard',
-              columns: [
-                {
-                  width: 12,
-                  elements: [
-                    {
-                      type: 'text',
-                      content: 'This is a default development layout. Configure your portal settings to see the actual layout.'
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
+      // If no layout found, return a beautiful "not found" layout with paradigmatic gravitas
+      console.log('No layout found, returning DashboardNotFound layout')
+      return {
+        Desktop: [
+          {
+            uniqueid: 'section-not-found-2',
+            col: [
+              {
+                uniqueid: 'col-not-found-2',
+                md: 12,
+                elements: [
+                  {
+                    uniqueid: 'dashboard-not-found-2',
+                    element: 'DashboardNotFound',
+                    layoutType: layoutType,
+                    contextId: objectId,
+                    systemKey: systemUniqueKey,
+                    portalKey: portalUniqueKey
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       }
-
-      return null
     } catch (error) {
       console.error('Failed to get dashboard layout:', error)
-      return null
+      
+      // Return the "not found" layout even on error
+      return {
+        Desktop: [
+          {
+            uniqueid: 'section-not-found-3',
+            col: [
+              {
+                uniqueid: 'col-not-found-3',
+                md: 12,
+                elements: [
+                  {
+                    uniqueid: 'dashboard-not-found-3',
+                    element: 'DashboardNotFound',
+                    layoutType: layoutType,
+                    contextId: objectId,
+                    systemKey: systemUniqueKey,
+                    portalKey: portalUniqueKey,
+                    error: (error as Error).message || 'Failed to load dashboard layout'
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
     }
   }
 
