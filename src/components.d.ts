@@ -8,6 +8,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     Card: typeof import('./components/ui/Card.vue')['default']
+    Carousel: typeof import('./components/dashboard-modules/modules/Carousel.vue')['default']
     CheckBox: typeof import('./components/ui/CheckBox.vue')['default']
     DashboardColumn: typeof import('./components/dashboard-modules/DashboardColumn.vue')['default']
     DashboardElement: typeof import('./components/dashboard-modules/DashboardElement.vue')['default']
@@ -31,6 +32,7 @@ declare module 'vue' {
     TextField: typeof import('./components/ui/TextField.vue')['default']
     TodoItem: typeof import('./components/dashboard-modules/modules/TodoItem.vue')['default']
     TodoList: typeof import('./components/dashboard-modules/modules/TodoList.vue')['default']
+    UserFriendsAdd: typeof import('./components/UserFriendsAdd.vue')['default']
     WergelandOrders: typeof import('./components/dashboard-modules/modules/WergelandOrders.vue')['default']
   }
 }

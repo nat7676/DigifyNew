@@ -45,6 +45,7 @@ const moduleRegistry: Record<string, () => Promise<Component>> = {
   ImageBox: () => import('./modules/ImageBox.vue'),
   TodoList: () => import('./modules/TodoList.vue'),
   ProjectUserStatus: () => import('./modules/ProjectUserStatus.vue'),
+  Carousel: () => import('./modules/Carousel.vue'),
   
   // System modules
   DashboardNotFound: () => import('./DashboardNotFound.vue'),
