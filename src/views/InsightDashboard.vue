@@ -146,6 +146,7 @@ import { useUIStore } from '@/stores/ui'
 import templateService from '@/services/template.service'
 import { useSystemContext } from '@/composables/useSystemContext'
 import DashboardLayout from '@/components/dashboard-modules/DashboardLayout.vue'
+import { getDomain } from '@/utils/domain'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -259,7 +260,8 @@ const loadDashboardData = async () => {
 
   try {
     // Load template cache data from service
-    const domain = window.location.hostname
+    // Use getDomain to handle localhost portal overrides correctly
+    const domain = getDomain()
     
     // Ensure portal settings are loaded first
     if (!templateService.isPortalInitialized()) {
@@ -337,6 +339,16 @@ watch(dashboardType, async (newType, oldType) => {
     loadDashboardData()
   }
 }, { immediate: false })
+
+// Watch for domain changes (e.g., when switching portals in localhost)
+watch(() => getDomain(), async (newDomain, oldDomain) => {
+  if (newDomain !== oldDomain) {
+    console.log('Domain changed, reloading portal settings:', { oldDomain, newDomain })
+    // Clear portal data and reload
+    templateService.clearPortalData()
+    await loadDashboardData()
+  }
+})
 
 // Lifecycle
 onMounted(async () => {

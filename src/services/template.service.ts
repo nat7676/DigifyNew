@@ -28,9 +28,17 @@ class TemplateService {
     const actualDomain = domain === 'localhost' ? 'my.digify.no' : domain
     const cacheKey = `portal:${actualDomain}`
     
+    console.log('getPortalSettings called:', { domain, actualDomain, cacheKey })
+    
     // Check cache first
     if (templateCache.has(cacheKey)) {
-      return templateCache.get(cacheKey)
+      const cached = templateCache.get(cacheKey)
+      console.log('Portal settings from cache:', { 
+        domain: actualDomain, 
+        UniqueKey: cached.UniqueKey,
+        PortalID: cached.PortalID 
+      })
+      return cached
     }
 
     try {
@@ -280,15 +288,15 @@ class TemplateService {
         break
       case 'system':
         if (!systemUniqueKey) throw new Error('System unique key required for system level')
-        // Include portal key for proper isolation between portals
-        uniqueKey = sha256(portalUniqueKey + '_' + systemUniqueKey + '_' + layoutType)
+        // Use only system key to match old system behavior
+        uniqueKey = sha256(systemUniqueKey + '_' + layoutType)
         break
       case 'object':
         if (!systemUniqueKey || !objectId) {
           throw new Error('System unique key and object ID required for object level')
         }
-        // Include portal key for proper isolation between portals
-        uniqueKey = sha256(portalUniqueKey + '_' + systemUniqueKey + '_' + layoutType + '_' + objectId)
+        // Use only system key to match old system behavior
+        uniqueKey = sha256(systemUniqueKey + '_' + layoutType + '_' + objectId)
         break
     }
 
@@ -449,25 +457,31 @@ class TemplateService {
     const mappedLayoutType = layoutTypeMap[layoutType] || layoutType
     
     
-    // Object-specific layout (most specific) - includes portal key for isolation
-    if (portalUniqueKey && systemUniqueKey && objectId) {
-      const keyString = portalUniqueKey + '_' + systemUniqueKey + '_' + mappedLayoutType + '_' + objectId
+    // Object-specific layout (most specific)
+    // Uses only system key + layout + objectId (matches old system)
+    if (systemUniqueKey && objectId) {
+      const keyString = systemUniqueKey + '_' + mappedLayoutType + '_' + objectId
       const objectKey = sha256(keyString)
       keys.push(objectKey)
+      console.log('Object-specific key:', { keyString, objectKey })
     }
     
-    // System-specific layout - includes portal key for isolation
-    if (portalUniqueKey && systemUniqueKey) {
-      const keyString = portalUniqueKey + '_' + systemUniqueKey + '_' + mappedLayoutType
+    // System-specific layout
+    // Uses only system key + layout (matches old system)
+    if (systemUniqueKey) {
+      const keyString = systemUniqueKey + '_' + mappedLayoutType
       const systemKey = sha256(keyString)
       keys.push(systemKey)
+      console.log('System-specific key:', { keyString, systemKey })
     }
     
     // Portal-specific layout (global for the portal)
+    // Uses only portal key + layout (matches old system)
     if (portalUniqueKey && portalID) {
       const keyString = portalUniqueKey + '_' + mappedLayoutType
       const globalKey = sha256(keyString)
       keys.push(globalKey)
+      console.log('Portal-specific key:', { keyString, globalKey })
     }
     
     
