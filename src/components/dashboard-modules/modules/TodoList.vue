@@ -1,8 +1,9 @@
 <template>
-  <Card 
+  <DashboardCard 
     :title="element.title || 'Todo List'"
     :show-title="element.showHeader !== false"
     :dense="true"
+    :element="element"
   >
     <!-- Header Actions -->
     <template v-if="!isEditMode && todoList" #append>
@@ -225,7 +226,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </Card>
+  </DashboardCard>
 </template>
 
 <script setup lang="ts">

@@ -1,9 +1,10 @@
 <template>
-  <Card 
+  <DashboardCard 
     :title="element.Title || element.title || 'Image Carousel'"
     :show-title="element.showHeader !== false"
     :no-padding="true"
     :dense="true"
+    :element="element"
   >
     <!-- Carousel Display -->
     <div v-if="carouselSettings.images.length > 0" class="carousel-wrapper">
@@ -476,7 +477,7 @@
         </v-carousel>
       </v-card>
     </v-dialog>
-  </Card>
+  </DashboardCard>
 </template>
 
 <script setup lang="ts">

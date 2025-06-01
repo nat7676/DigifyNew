@@ -10,6 +10,7 @@ declare module 'vue' {
     Card: typeof import('./components/ui/Card.vue')['default']
     Carousel: typeof import('./components/dashboard-modules/modules/Carousel.vue')['default']
     CheckBox: typeof import('./components/ui/CheckBox.vue')['default']
+    DashboardCard: typeof import('./components/ui/DashboardCard.vue')['default']
     DashboardColumn: typeof import('./components/dashboard-modules/DashboardColumn.vue')['default']
     DashboardElement: typeof import('./components/dashboard-modules/DashboardElement.vue')['default']
     DashboardLayout: typeof import('./components/dashboard-modules/DashboardLayout.vue')['default']

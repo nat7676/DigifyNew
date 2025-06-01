@@ -1,9 +1,10 @@
 <template>
-  <Card 
+  <DashboardCard 
     :title="element.title || 'Image Box'"
     :show-title="element.showHeader !== false"
     :dense="true"
     :no-padding="true"
+    :element="element"
   >
     <!-- Image Display -->
     <div v-if="imageSettings.imageSrc" class="image-container">
@@ -256,7 +257,7 @@
         </v-container>
       </v-card>
     </v-dialog>
-  </Card>
+  </DashboardCard>
 </template>
 
 <script setup lang="ts">

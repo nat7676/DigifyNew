@@ -1,13 +1,13 @@
 <template>
-  <v-card
-   
+  <DashboardCard
+    :element="element"
   >
     
     <v-card-text>
     <pre>{{ data.slice(0, 10) }}</pre>
     </v-card-text>
     
-  </v-card>
+  </DashboardCard>
 </template>
 
 <script setup lang="ts">

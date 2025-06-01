@@ -1,4 +1,5 @@
 <template>
+  Before {{ element.element }}
   <component
     :is="moduleComponent"
     v-if="moduleComponent"
@@ -11,6 +12,7 @@
     :module-name="element.element"
     :element="element"
   />
+  After {{ element.element }}
 </template>
 
 <script setup lang="ts">

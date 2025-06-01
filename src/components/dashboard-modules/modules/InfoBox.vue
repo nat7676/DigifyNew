@@ -1,7 +1,8 @@
 <template>
-  <Card 
+  <DashboardCard 
     :title="element.title || 'Info Box'"
     :show-title="element.showHeader !== false"
+    :element="element"
   >
     <div
       class="info-content"
@@ -42,7 +43,7 @@
         />
       </div>
     </template>
-  </Card>
+  </DashboardCard>
 </template>
 
 <script setup lang="ts">

@@ -1,12 +1,11 @@
 <template>
-  <Card 
-    :title="element.title || 'Project User Status'"
-    :show-title="element.showHeader !== false"
-    :dense="true"
+  <DashboardCard 
+    :element="element"
+    :loading="loading"
   >
     <!-- Header Actions -->
-    <template #append>
-      <v-menu v-if="!isEditMode">
+    <template #right v-if="!isEditMode">
+      <v-menu>
         <template v-slot:activator="{ props }">
           <v-btn
             icon="mdi-dots-vertical"
@@ -196,8 +195,7 @@
     </div>
     
     <!-- Edit Mode -->
-    <template v-if="isEditMode">
-      <v-divider class="my-4" />
+    <template #editcontent v-if="isEditMode">
       <div class="edit-controls pa-4">
         <p class="text-subtitle-2 mb-3">Module Settings</p>
         
@@ -424,12 +422,12 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </Card>
+  </DashboardCard>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, reactive, watch, onMounted, onUnmounted } from 'vue'
-import Card from '@/components/ui/Card.vue'
+import DashboardCard from '@/components/ui/DashboardCard.vue'
 import TextField from '@/components/ui/TextField.vue'
 import TextArea from '@/components/ui/TextArea.vue'
 import CheckBox from '@/components/ui/CheckBox.vue'

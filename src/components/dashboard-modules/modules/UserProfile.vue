@@ -1,15 +1,8 @@
 <template>
-  <Card 
-    :title="element.title || 'User Profile'"
-    :show-title="element.showHeader !== false"
+  <DashboardCard 
+    :element="element"
+    :loading="loading"
   >
-    <!-- Debug Info -->
-    <div class="pa-4 text-center" style="background-color: #f0f0f0;">
-      <p>UserProfile Component is Rendering!</p>
-      <p>Element ID: {{ element.uniqueid }}</p>
-      <p>Loading: {{ loading }}</p>
-    </div>
-    
     <!-- Loading State -->
     <div v-if="loading" class="pa-6 text-center">
       <v-progress-circular indeterminate color="primary" />
@@ -276,7 +269,7 @@
     </div>
     
     <!-- Edit Mode Settings (for module configuration) -->
-    <template v-if="element.EditMode">
+    <template #editcontent v-if="element.EditMode">
       <v-divider class="my-4" />
       <div class="edit-controls pa-4">
         <p class="text-subtitle-2 mb-3">Module Settings</p>
@@ -412,13 +405,13 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </Card>
+  </DashboardCard>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import Card from '@/components/ui/Card.vue'
+import DashboardCard from '@/components/ui/DashboardCard.vue'
 import TextField from '@/components/ui/TextField.vue'
 import CheckBox from '@/components/ui/CheckBox.vue'
 import { executeSQLQueryWithCallback } from '@/services/sql.service'
@@ -459,8 +452,6 @@ const router = useRouter()
 const authStore = useAuthStore()
 const uiStore = useUIStore()
 
-// Debug logging
-console.log('UserProfile component initialized with props:', props)
 
 // State
 const loading = ref(true)
@@ -717,8 +708,6 @@ watch(settings, (newSettings) => {
 
 // Lifecycle
 onMounted(() => {
-  console.log('UserProfile mounted, loading user profile for ID:', targetUserId.value)
-  console.log('Element prop:', props.element)
   loadUserProfile()
 })
 </script>
