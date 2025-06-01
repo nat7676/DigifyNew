@@ -113,7 +113,7 @@
     <debug-toolbar />
     
     <!-- Hidden Portal Selector (triggered by debug toolbar) -->
-    <layout-header-domain />
+    <portal-selector />
   </v-app>
 </template>
 
@@ -125,7 +125,7 @@ import { useUIStore } from '@/stores/ui'
 import DynamicMenu from '@/components/layout/DynamicMenu.vue'
 import SystemSelector from '@/components/layout/SystemSelector.vue'
 import DebugToolbar from '@/components/layout/DebugToolbar.vue'
-import LayoutHeaderDomain from '@/components/layout/LayoutHeaderDomain.vue'
+import PortalSelector from '@/components/layout/PortalSelector.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()

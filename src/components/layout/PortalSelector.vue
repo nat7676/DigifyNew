@@ -52,7 +52,19 @@
           class="mb-6 current-portal-card"
         >
           <v-card-text class="d-flex align-center">
+            <v-avatar
+              v-if="currentPortalLogo"
+              size="48"
+              class="mr-3 portal-logo"
+            >
+              <v-img
+                :src="currentPortalLogo"
+                :alt="currentPortalName"
+                cover
+              />
+            </v-avatar>
             <v-icon
+              v-else
               size="24"
               class="mr-3"
             >
@@ -60,8 +72,11 @@
             </v-icon>
             <div>
               <div class="text-overline">CURRENT PORTAL</div>
-              <div class="text-h6 font-weight-bold">{{ currentDomain }}</div>
-              <div class="text-caption opacity-70">Portal ID: {{ currentPortalId }}</div>
+              <div class="text-h6 font-weight-bold">{{ currentPortalName || currentDomain }}</div>
+              <div class="text-caption opacity-70">
+                <span v-if="currentDomain !== 'localhost'">{{ currentDomain }} • </span>
+                Portal ID: {{ currentPortalId }}
+              </div>
             </div>
           </v-card-text>
         </v-card>
@@ -124,6 +139,18 @@
               >
                 <template #prepend>
                   <v-avatar
+                    v-if="portal.Logo"
+                    size="40"
+                    class="portal-logo"
+                  >
+                    <v-img
+                      :src="portal.Logo"
+                      :alt="portal.Name"
+                      cover
+                    />
+                  </v-avatar>
+                  <v-avatar
+                    v-else
                     :color="getPortalColor(portal.PortalID)"
                     size="40"
                     class="text-white font-weight-bold"
@@ -221,6 +248,7 @@ interface PortalType {
   PortalID: number
   Name: string
   Domain?: string
+  Logo?: string
 }
 
 const authStore = useAuthStore()
@@ -244,6 +272,18 @@ const currentDomain = computed(() => {
 
 const currentPortalId = computed(() => {
   return authStore.currentToken?.PortalID || 1
+})
+
+const currentPortal = computed(() => {
+  return portals.value.find(p => p.Domain === currentDomain.value)
+})
+
+const currentPortalName = computed(() => {
+  return currentPortal.value?.Name
+})
+
+const currentPortalLogo = computed(() => {
+  return currentPortal.value?.Logo
 })
 
 const filteredPortals = computed(() => {
@@ -403,6 +443,22 @@ const getPortalColor = (portalId: number) => {
 .portal-item:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.portal-logo {
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  background-color: rgba(var(--v-theme-surface));
+  overflow: hidden;
+}
+
+.portal-logo .v-img {
+  padding: 4px;
+}
+
+/* Ensure logos look good in current portal card */
+.current-portal-card .portal-logo {
+  border-color: rgba(var(--v-theme-primary), 0.3);
+  background-color: white;
 }
 
 /* Custom scrollbar */
