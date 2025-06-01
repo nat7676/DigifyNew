@@ -6,6 +6,7 @@
         <h1 class="text-h4">{{ dashboardTitle }}</h1>
         <p class="text-body-1 text-medium-emphasis">
           Context ID: {{ contextId || 'Not specified' }} | Type: {{ dashboardType }}
+          <span v-if="objectId"> | Object ID: {{ objectId }}</span>
         </p>
       </v-col>
     </v-row>
@@ -42,8 +43,15 @@
       @module-not-found="handleModuleNotFound"
     />
 
-    <!-- Fallback Content when no template -->
-    <v-row v-else>
+    <!-- Default Dashboard Layout when no template found -->
+    <dashboard-layout
+      v-else-if="!loading && !error && !dashboardData"
+      :layout="getDefaultDashboardLayout()"
+      @module-not-found="handleModuleNotFound"
+    />
+
+    <!-- Fallback Content (should not be shown normally) -->
+    <v-row v-else-if="false">
       <!-- Contract Overview -->
       <v-col cols="12" md="8">
         <v-card>
@@ -162,28 +170,69 @@ const error = ref<string | null>(null)
 const dashboardData = ref<any>(null)
 const showDebug = ref(import.meta.env.DEV)
 
-// Layout type mapping
+// Layout type mapping - maps URL segments to dashboard layout types
+// Note: For most types, we use the URL segment directly (e.g., 'project' -> 'project')
+// This matches the old system's DashBoardEnum values
 const layoutTypeMap: Record<string, string> = {
-  dashboard: 'insightDashboard',
-  companies: 'companyDashboard',
-  contracts: 'contractDashboard',
-  documents: 'documentDashboard',
-  analytics: 'analyticsDashboard',
-  reports: 'reportsDashboard',
-  settings: 'settingsDashboard'
+  dashboard: 'dashboard',  // Changed from 'insightDashboard' to match old system
+  companies: 'company',    // Match old system's 'company'
+  contracts: 'contract',   // Match old system's 'contract'
+  documents: 'dataroom',   // Match old system's 'dataroom'
+  analytics: 'analytics',
+  reports: 'reports',
+  settings: 'settings',
+  // Direct mappings for old system dashboard types
+  project: 'project',
+  task: 'task',
+  user: 'user',
+  personaldashboard: 'personaldashboard',
+  chat: 'chat',
+  duediligence: 'duediligence',
+  timebank: 'timebank',
+  shareholder: 'shareholder',
+  subaccount: 'subaccount',
+  smsservice: 'smsservice',
+  tagedit: 'tagedit',
+  emailtemplate: 'emailtemplate',
+  wergelandorder: 'wergelandorder'
 }
 
 // Computed
 const contextId = computed(() => route.query.contextId as string || null)
 
-// Get the dashboard type from the route - defaults to 'dashboard' if not specified
-const dashboardType = computed(() => {
+// Parse dashboard type and object ID from the route
+// For URLs like /insight/project/14038, extract 'project' as type and '14038' as object ID
+const parsedRoute = computed(() => {
   const page = route.params.page
+  let pathParts: string[] = []
+  
   if (Array.isArray(page)) {
-    return page.join('/') || 'dashboard'
+    pathParts = page
+  } else if (page) {
+    pathParts = [page]
   }
-  return page || 'dashboard'
+  
+  // Extract dashboard type (first part) and object ID (second part if numeric)
+  const dashboardType = pathParts[0] || 'dashboard'
+  let objectId: string | undefined = undefined
+  
+  // Check if second part is a numeric ID
+  if (pathParts.length >= 2 && /^\d+$/.test(pathParts[1])) {
+    objectId = pathParts[1]
+  }
+  
+  return {
+    dashboardType,
+    objectId,
+    fullPath: pathParts.join('/')
+  }
 })
+
+// Get the dashboard type from the parsed route
+const dashboardType = computed(() => parsedRoute.value.dashboardType)
+
+// Get the object ID from the parsed route (if present)
+const objectId = computed(() => parsedRoute.value.objectId)
 
 // Dashboard title based on type
 const dashboardTitle = computed(() => {
@@ -194,7 +243,20 @@ const dashboardTitle = computed(() => {
     documents: 'Document Center',
     analytics: 'Analytics Dashboard',
     reports: 'Reports',
-    settings: 'Dashboard Settings'
+    settings: 'Dashboard Settings',
+    project: 'Project Dashboard',
+    task: 'Task Dashboard',
+    user: 'User Dashboard',
+    personaldashboard: 'Personal Dashboard',
+    chat: 'Chat Dashboard',
+    duediligence: 'Due Diligence',
+    timebank: 'Timebank Dashboard',
+    shareholder: 'Shareholder Dashboard',
+    subaccount: 'Sub-account Dashboard',
+    smsservice: 'SMS Service Dashboard',
+    tagedit: 'Tag Editor',
+    emailtemplate: 'Email Template Dashboard',
+    wergelandorder: 'Wergeland Order Dashboard'
   }
   return titles[dashboardType.value] || `${dashboardType.value.charAt(0).toUpperCase() + dashboardType.value.slice(1)} Dashboard`
 })
@@ -234,6 +296,8 @@ const stats = ref([
 const debugInfo = computed(() => ({
   contextId: contextId.value,
   dashboardType: dashboardType.value,
+  objectId: objectId.value,
+  parsedRoute: parsedRoute.value,
   route: {
     path: route.path,
     query: route.query,
@@ -254,6 +318,17 @@ const debugInfo = computed(() => ({
 }))
 
 // Methods
+const getDefaultDashboardLayout = () => {
+  // Return a default dashboard layout that matches the old system's structure
+  // This is used when no dashboard template is found in the cache
+  return {
+    PageSettings: {
+      // Default page settings can be added here if needed
+    },
+    Desktop: [] // Empty desktop array - the DashboardLayout component will handle this
+  }
+}
+
 const loadDashboardData = async () => {
   loading.value = true
   error.value = null
@@ -273,22 +348,25 @@ const loadDashboardData = async () => {
     console.log('Loading dashboard with keys:', {
       systemUniqueKey: templateService.getSystemUniqueKey(),
       portalUniqueKey: templateService.getPortalUniqueKey(),
-      portalID: templateService.getPortalID()
+      portalID: templateService.getPortalID(),
+      dashboardType: dashboardType.value,
+      objectId: objectId.value
     })
     
     // Get dashboard layout for the specific dashboard type
     const layoutType = layoutTypeMap[dashboardType.value] || dashboardType.value
     
     // The template service will automatically use the current system's UniqueKey
-    const layout = await templateService.getDashboardLayout(layoutType, undefined, contextId.value || undefined)
+    // Pass the object ID (from URL path) as the third parameter for object-specific layouts
+    const layout = await templateService.getDashboardLayout(layoutType, undefined, objectId.value || undefined)
     
     if (layout) {
       dashboardData.value = layout
-      console.log('Loaded dashboard layout from template service:', layout)
+      console.log('Loaded dashboard layout from template service')
     } else {
-      console.log('No dashboard layout found in template service')
+      console.log('No dashboard layout found in template service - will use default empty dashboard')
       // If no layout from template service, dashboardData remains null
-      // and the fallback content will be shown
+      // and the default dashboard layout will be shown
     }
     
     // If we have a contextId, use it for loading system-specific data

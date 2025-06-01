@@ -166,33 +166,10 @@ class TemplateService {
     }
     
 
-    // If no keys generated (no portal or system loaded yet), return not found layout
+    // If no keys generated (no portal or system loaded yet), return null
     if (uniqueKeys.length === 0) {
-      console.log('No unique keys generated, returning DashboardNotFound layout')
-      return {
-        Desktop: [
-          {
-            uniqueid: 'section-not-found-1',
-            col: [
-              {
-                uniqueid: 'col-not-found-1',
-                md: 12,
-                elements: [
-                  {
-                    uniqueid: 'dashboard-not-found-1',
-                    element: 'DashboardNotFound',
-                    layoutType: layoutType,
-                    contextId: objectId,
-                    systemKey: systemUniqueKey,
-                    portalKey: portalUniqueKey,
-                    message: 'Portal settings not loaded yet'
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
+      console.log('No unique keys generated (portal/system not loaded), returning null')
+      return null
     }
 
     try {
@@ -239,59 +216,14 @@ class TemplateService {
         }
       }
 
-      // If no layout found, return a beautiful "not found" layout with paradigmatic gravitas
-      console.log('No layout found, returning DashboardNotFound layout')
-      return {
-        Desktop: [
-          {
-            uniqueid: 'section-not-found-2',
-            col: [
-              {
-                uniqueid: 'col-not-found-2',
-                md: 12,
-                elements: [
-                  {
-                    uniqueid: 'dashboard-not-found-2',
-                    element: 'DashboardNotFound',
-                    layoutType: layoutType,
-                    contextId: objectId,
-                    systemKey: systemUniqueKey,
-                    portalKey: portalUniqueKey
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
+      // If no layout found, return null to trigger fallback behavior
+      console.log('No layout found for type:', layoutType, 'objectId:', objectId)
+      return null
     } catch (error) {
       console.error('Failed to get dashboard layout:', error)
       
-      // Return the "not found" layout even on error
-      return {
-        Desktop: [
-          {
-            uniqueid: 'section-not-found-3',
-            col: [
-              {
-                uniqueid: 'col-not-found-3',
-                md: 12,
-                elements: [
-                  {
-                    uniqueid: 'dashboard-not-found-3',
-                    element: 'DashboardNotFound',
-                    layoutType: layoutType,
-                    contextId: objectId,
-                    systemKey: systemUniqueKey,
-                    portalKey: portalUniqueKey,
-                    error: (error as Error).message || 'Failed to load dashboard layout'
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
+      // Return null on error to trigger fallback behavior
+      return null
     }
   }
 
