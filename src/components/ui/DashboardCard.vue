@@ -1,5 +1,6 @@
 <template>
   <Card
+    v-if="hasAccess"
     :title="title || element.title"
     :show-title="showHeader"
     :elevation="computedElevation"
@@ -203,21 +204,33 @@ const contentEl = ref<HTMLElement>()
 const hasAccess = computed(() => {
   const element = props.element
   
-  // Check minimum access level
-  if (element.MinimumAccessLevel && authStore.currentToken) {
-    const userLevel = authStore.currentToken.AccessLevelID || 0
+  // Check if module is hidden
+  if (element.HiddenModule) return false
+  
+  // Check minimum access level (only if > 0)
+  if (element.MinimumAccessLevel && element.MinimumAccessLevel > 0) {
+    const userLevel = authStore.currentToken?.AccessLevelID || 0
     if (userLevel < element.MinimumAccessLevel) return false
   }
   
-  // Check access roles
-  if (element.AccessRoles && authStore.currentToken?.roles) {
-    const hasRequiredRole = Object.entries(element.AccessRoles).some(
-      ([roleId, required]) => required && authStore.currentToken?.roles?.[roleId]
+  // Check access roles (only if roles are defined and required)
+  if (element.AccessRoles && Object.keys(element.AccessRoles).length > 0) {
+    // Check if any role is required (value is true)
+    const hasRequiredRoles = Object.entries(element.AccessRoles).some(
+      ([_, required]) => required
     )
-    if (!hasRequiredRole) return false
+    
+    // Only check roles if there are actually required roles
+    if (hasRequiredRoles && authStore.currentToken?.roles) {
+      const hasRequiredRole = Object.entries(element.AccessRoles).some(
+        ([roleId, required]) => required && authStore.currentToken?.roles?.[Number(roleId)]
+      )
+      if (!hasRequiredRole) return false
+    }
   }
   
-  return !element.HiddenModule
+  // Default to showing the card
+  return true
 })
 
 // Computed properties

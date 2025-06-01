@@ -10,7 +10,7 @@
     </div>
     
     <!-- Profile Display -->
-    <v-container v-if="userProfile" fluid>
+    <v-container v-else-if="!loading && userProfile" fluid>
       <v-row>
         <!-- Profile Image Section -->
         <v-col cols="12" md="3" class="text-center">
@@ -19,7 +19,7 @@
               size="150" 
               class="profile-avatar"
               :class="{ 'editable': hasEditAccess }"
-              @click="hasEditAccess && showImageDialog ? showImageDialog = true : null"
+              @click="hasEditAccess ? showImageDialog = true : undefined"
             >
               <v-img 
                 v-if="profileImageUrl"
@@ -68,7 +68,7 @@
               You
             </v-chip>
             <v-chip
-              v-if="userProfile.AccessLevelID >= 90"
+              v-if="isCurrentUser && authStore.currentToken?.AccessLevelID && authStore.currentToken.AccessLevelID >= 90"
               color="error"
               size="small"
               label
@@ -275,7 +275,8 @@
         <p class="text-subtitle-2 mb-3">Module Settings</p>
         
         <TextField
-          v-model.number="settings.DefaultUserId"
+          :modelValue="settings.DefaultUserId ?? ''"
+          @update:modelValue="(value) => settings.DefaultUserId = value ? Number(value) : undefined"
           label="Default User ID (leave empty for current user)"
           type="number"
           class="mb-3"
@@ -417,8 +418,9 @@ import CheckBox from '@/components/ui/CheckBox.vue'
 import { executeSQLQueryWithCallback } from '@/services/sql.service'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
-import { fetchAllRelatedUsersFromCache } from '@/modules/shared/sharedhelpers'
-import type { AllRelatedUsersCacheType, DashboardElement } from '@/modules/shared/shared'
+// import { fetchAllRelatedUsersFromCache } from '@/modules/shared/sharedhelpers'
+import type { AllRelatedUsersCacheType } from '@/modules/shared/shared'
+import type { DashboardElement } from '@/types/shared'
 
 // Extended user profile interface
 interface UserProfileData extends AllRelatedUsersCacheType {
@@ -441,10 +443,10 @@ interface Props {
     showHeader?: boolean
     EditMode?: boolean
     UserProfile?: UserProfileSettings
+    userid?: number
   }
   settings?: Record<string, any>
   minimized?: boolean
-  userid?: number
 }
 
 const props = defineProps<Props>()
@@ -454,7 +456,7 @@ const uiStore = useUIStore()
 
 
 // State
-const loading = ref(true)
+const loading = ref(false)
 const saving = ref(false)
 const deleting = ref(false)
 const userProfile = ref<UserProfileData | null>(null)
@@ -464,7 +466,6 @@ const accountDeleted = ref(false)
 const showImageDialog = ref(false)
 const imageTab = ref('url')
 const imageUrl = ref('')
-const allUsers = ref<{ [Tel: number]: AllRelatedUsersCacheType }>({})
 
 // Form data
 const editForm = reactive({
@@ -495,8 +496,22 @@ const settings = reactive(getSettings())
 
 // Computed
 const targetUserId = computed(() => {
-  // Priority: prop > settings > current user
-  return props.userid || settings.DefaultUserId || authStore.currentToken?.userid || 0
+  // Priority: element.userid > settings > current user
+  // Note: -1 means use current user, 0 or undefined means no user
+  const elementUserId = props.element.userid
+  
+  if (elementUserId === -1 || elementUserId === undefined) {
+    // Use current user
+    return authStore.currentToken?.userid || 0
+  }
+  
+  if (elementUserId && elementUserId > 0) {
+    // Use specific user from element
+    return elementUserId
+  }
+  
+  // Fall back to settings or current user
+  return settings.DefaultUserId || authStore.currentToken?.userid || 0
 })
 
 const isCurrentUser = computed(() => {
@@ -511,7 +526,7 @@ const hasEditAccess = computed(() => {
   if (isCurrentUser.value) return true
   
   // Admins can edit any profile
-  return currentUser.AccessLevelID >= 90
+  return (currentUser.AccessLevelID ?? 0) >= 90
 })
 
 const cardTitle = computed(() => {
@@ -548,42 +563,103 @@ const rules = {
 
 // Methods
 const loadUserProfile = async () => {
+  const userId = targetUserId.value
+  console.log('Loading user profile for ID:', userId)
+  
+  if (!userId || userId === 0) {
+    console.warn('No valid user ID to load')
+    userProfile.value = null
+    loading.value = false
+    return
+  }
+  
   loading.value = true
   
   try {
-    // Load all users cache
-    allUsers.value = await fetchAllRelatedUsersFromCache()
+    // TODO: Implement user cache in new system
+    // For now, create a mock user profile based on current user
+    const currentToken = authStore.currentToken
     
-    // Get user from cache
-    const cachedUser = allUsers.value[targetUserId.value]
-    
-    if (cachedUser) {
-      // Load extended profile data if available
+    if (userId === currentToken?.userid) {
+      // Create a basic profile for the current user
+      const mockUser: AllRelatedUsersCacheType = {
+        Tel: userId,
+        CreatedWhen: new Date(),
+        ActiveSystemID: currentToken.systemid || 0,
+        FirstName: 'User',
+        LastName: userId.toString(),
+        Email: '',
+        LinkedInUserName: '',
+        Name: `User ${userId}`,
+        AccessLevelID: currentToken.AccessLevelID || 0,
+        UserGroupID: 0,
+        PortalID: currentToken.PortalID || 0,
+        SystemID: currentToken.systemid || 0,
+        InsightsDebug: false
+      }
+      
+      // Try to load extended profile data
       try {
         const result = await executeSQLQueryWithCallback(
           '/components/UserProfile/GetExtended',
-          { UserID: targetUserId.value }
+          { UserID: userId }
         )
         
         if (result?.tables?.[0]?.rows?.[0]) {
           userProfile.value = {
-            ...cachedUser,
+            ...mockUser,
             ...result.tables[0].rows[0]
           }
         } else {
-          userProfile.value = cachedUser
+          userProfile.value = mockUser
         }
-      } catch {
-        // Fall back to cached data
-        userProfile.value = cachedUser
+      } catch (err) {
+        console.warn('Failed to load extended profile:', err)
+        userProfile.value = mockUser
       }
       
       // Initialize edit form
       initializeEditForm()
+    } else {
+      // For other users, we need to load from database
+      try {
+        const result = await executeSQLQueryWithCallback(
+          '/components/UserProfile/Get',
+          { UserID: userId }
+        )
+        
+        if (result?.tables?.[0]?.rows?.[0]) {
+          const userData = result.tables[0].rows[0]
+          userProfile.value = {
+            Tel: userId,
+            CreatedWhen: new Date(userData.CreatedWhen || Date.now()),
+            ActiveSystemID: userData.ActiveSystemID || 0,
+            FirstName: userData.FirstName || '',
+            LastName: userData.LastName || '',
+            Email: userData.Email || '',
+            LinkedInUserName: userData.LinkedInUserName || '',
+            Name: `${userData.FirstName || ''} ${userData.LastName || ''}`.trim() || `User ${userId}`,
+            AccessLevelID: userData.AccessLevelID || 0,
+            UserGroupID: userData.UserGroupID || 0,
+            PortalID: userData.PortalID || 0,
+            SystemID: userData.SystemID || 0,
+            InsightsDebug: false,
+            ...userData
+          }
+          initializeEditForm()
+        } else {
+          console.warn('User not found for ID:', userId)
+          userProfile.value = null
+        }
+      } catch (err) {
+        console.error('Failed to load user profile:', err)
+        userProfile.value = null
+      }
     }
   } catch (error) {
     console.error('Failed to load user profile:', error)
     uiStore.showError('Failed to load user profile')
+    userProfile.value = null
   } finally {
     loading.value = false
   }
@@ -617,14 +693,8 @@ const saveProfile = async () => {
     if (userProfile.value) {
       Object.assign(userProfile.value, editForm)
       
-      // Update global cache
-      const cachedUser = allUsers.value[targetUserId.value]
-      if (cachedUser) {
-        cachedUser.FirstName = editForm.FirstName
-        cachedUser.LastName = editForm.LastName
-        cachedUser.Email = editForm.Email
-        cachedUser.LinkedInUserName = editForm.LinkedInUserName
-      }
+      // TODO: Update global cache when implemented
+      // For now, just update local data
     }
     
     isEditMode.value = false
@@ -682,9 +752,9 @@ const deleteAccount = async () => {
     accountDeleted.value = true
     
     // Log out after 2 seconds
-    setTimeout(() => {
-      authStore.logout()
-      router.push('/login')
+    setTimeout(async () => {
+      await authStore.logout()
+      await router.push('/login')
     }, 2000)
   } catch (error) {
     console.error('Failed to delete account:', error)
@@ -708,6 +778,8 @@ watch(settings, (newSettings) => {
 
 // Lifecycle
 onMounted(() => {
+  console.log('UserProfile mounted with targetUserId:', targetUserId.value)
+  console.log('Element data:', props.element)
   loadUserProfile()
 })
 </script>
