@@ -32,7 +32,7 @@ declare module 'vue' {
     TextField: typeof import('./components/ui/TextField.vue')['default']
     TodoItem: typeof import('./components/dashboard-modules/modules/TodoItem.vue')['default']
     TodoList: typeof import('./components/dashboard-modules/modules/TodoList.vue')['default']
-    UserFriendsAdd: typeof import('./components/UserFriendsAdd.vue')['default']
+    UserProfile: typeof import('./components/dashboard-modules/modules/UserProfile.vue')['default']
     WergelandOrders: typeof import('./components/dashboard-modules/modules/WergelandOrders.vue')['default']
   }
 }
