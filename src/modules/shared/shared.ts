@@ -3890,3 +3890,42 @@ export interface TecDocRequest {
     genericSearch?: Object;
   };
 }
+
+// Setting enum for module/feature permissions
+export enum Setting {
+  s1 = "s1", // ModuleCompanies
+  s2 = "s2", // ModuleDatafeed
+  s3 = "s3", // ModuleSimilarSearch
+  s4 = "s4", // ModuleTags
+  s5 = "s5", // ModuleDashboard
+  s6 = "s6", // ModuleDashboardPersonal
+  s7 = "s7", // ModuleTasks
+  s8 = "s8", // ModuleDeals
+  s9 = "s9", // ModuleContract
+  s10 = "s10", // ModuleContractAPI
+  s11 = "s11", // ModuleDataroomTimebank
+  s12 = "s12", // ModuleDataroomDD
+  s13 = "s13", // ModuleDataroomSingleroom
+  s14 = "s14", // ModuleMessageLog
+  s15 = "s15", // ModuleSMSAPI
+  s16 = "s16", // ModuleSMSMO
+  s17 = "s17", // ModuleSMSMT
+  s18 = "s18", // ModuleSMSStat
+  s19 = "s19", // ModuleChat
+  s20 = "s20", // ModuleActiveUsers
+  s21 = "s21", // ModuleAdmin
+  s22 = "s22", // ModuleDemo
+  s23 = "s23", // ModuleUrlAdmin
+  s24 = "s24", // AutoTags
+  s25 = "s25", // Pitch
+  h1 = "h1", // HelperModuleDataroom
+  h2 = "h2", // HelperModuleTools
+  h3 = "h3", // HelperModuleSMS
+  h4 = "h4", // HelperAPI
+  h5 = "h5", // HelperActiveDeals
+  h6 = "h6", // HelperDeals
+  h7 = "h7", // Always on, is used for custom menu
+  SimilarSearch = "s3", // Alias for backward compatibility
+  SMS = "h3", // Alias for SMS features
+  API = "h4", // Alias for API features
+}

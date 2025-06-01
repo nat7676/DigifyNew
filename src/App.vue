@@ -8,23 +8,8 @@
         :rail="rail"
         permanent
       >
-        <v-list>
-          <v-list-item
-            prepend-icon="mdi-home"
-            title="Dashboard"
-            @click="navigateTo('/insight/dashboard')"
-          />
-          <v-list-item
-            prepend-icon="mdi-account"
-            title="Profile"
-            @click="navigateTo('/profile')"
-          />
-          <v-list-item
-            prepend-icon="mdi-cog"
-            title="Settings"
-            @click="navigateTo('/settings')"
-          />
-        </v-list>
+        <!-- Dynamic Menu -->
+        <dynamic-menu />
         </v-navigation-drawer>
 
       <!-- App Bar -->
@@ -123,6 +108,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
+import DynamicMenu from '@/components/layout/DynamicMenu.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()

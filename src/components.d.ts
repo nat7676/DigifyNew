@@ -11,6 +11,8 @@ declare module 'vue' {
     DashboardElement: typeof import('./components/dashboard-modules/DashboardElement.vue')['default']
     DashboardLayout: typeof import('./components/dashboard-modules/DashboardLayout.vue')['default']
     DashboardSection: typeof import('./components/dashboard-modules/DashboardSection.vue')['default']
+    DynamicMenu: typeof import('./components/layout/DynamicMenu.vue')['default']
+    DynamicMenuItem: typeof import('./components/layout/DynamicMenuItem.vue')['default']
     ModuleNotFound: typeof import('./components/dashboard-modules/ModuleNotFound.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

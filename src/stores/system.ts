@@ -18,6 +18,7 @@ export const useSystemStore = defineStore('system', () => {
   const portalId = ref<number>(1)
   const isOnline = ref(true)
   const maintenanceMode = ref(false)
+  const menuItems = ref<any[]>([]) // Custom menu items from server
 
   // Computed
   const isDevelopment = computed(() => import.meta.env.DEV)
@@ -167,6 +168,7 @@ export const useSystemStore = defineStore('system', () => {
     portalId: computed(() => portalId.value),
     isOnline: computed(() => isOnline.value),
     maintenanceMode: computed(() => maintenanceMode.value),
+    menuItems: computed(() => menuItems.value),
     
     // Computed
     isDevelopment,
