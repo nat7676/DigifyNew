@@ -7,6 +7,8 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    Card: typeof import('./components/ui/Card.vue')['default']
+    CheckBox: typeof import('./components/ui/CheckBox.vue')['default']
     DashboardColumn: typeof import('./components/dashboard-modules/DashboardColumn.vue')['default']
     DashboardElement: typeof import('./components/dashboard-modules/DashboardElement.vue')['default']
     DashboardLayout: typeof import('./components/dashboard-modules/DashboardLayout.vue')['default']
@@ -15,6 +17,7 @@ declare module 'vue' {
     DebugToolbar: typeof import('./components/layout/DebugToolbar.vue')['default']
     DynamicMenu: typeof import('./components/layout/DynamicMenu.vue')['default']
     DynamicMenuItem: typeof import('./components/layout/DynamicMenuItem.vue')['default']
+    InfoBox: typeof import('./components/dashboard-modules/modules/InfoBox.vue')['default']
     ModuleNotFound: typeof import('./components/dashboard-modules/ModuleNotFound.vue')['default']
     PortalSelector: typeof import('./components/layout/PortalSelector.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
@@ -22,6 +25,8 @@ declare module 'vue' {
     SystemSelector: typeof import('./components/layout/SystemSelector.vue')['default']
     TestPortalSwitching: typeof import('./components/TestPortalSwitching.vue')['default']
     TestTokenAuth: typeof import('./components/TestTokenAuth.vue')['default']
+    TextArea: typeof import('./components/ui/TextArea.vue')['default']
+    TextField: typeof import('./components/ui/TextField.vue')['default']
     WergelandOrders: typeof import('./components/dashboard-modules/modules/WergelandOrders.vue')['default']
   }
 }

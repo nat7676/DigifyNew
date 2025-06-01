@@ -41,12 +41,14 @@ const emit = defineEmits<{
 const moduleRegistry: Record<string, () => Promise<Component>> = {
   // Currently implemented modules
   wergelandOrders: () => import('./modules/WergelandOrders.vue'),
+  InfoBox: () => import('./modules/InfoBox.vue'),
   
   // System modules
   DashboardNotFound: () => import('./DashboardNotFound.vue'),
   
   // Add more modules as they are created
   // Example of how to add new modules:
+  // InfoBoxRich: () => import('./modules/InfoBoxRich.vue'),
   // companyInfo: () => import('./modules/CompanyInfo.vue'),
   // contractList: () => import('./modules/ContractList.vue'),
   // documentList: () => import('./modules/DocumentList.vue'),

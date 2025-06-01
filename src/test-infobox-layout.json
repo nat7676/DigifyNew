@@ -1,0 +1,46 @@
+{
+  "Desktop": [
+    {
+      "uniqueid": "section-test-1",
+      "col": [
+        {
+          "uniqueid": "col-test-1",
+          "md": 6,
+          "elements": [
+            {
+              "uniqueid": "infobox-test-1",
+              "element": "InfoBox",
+              "title": "Test InfoBox",
+              "showHeader": true,
+              "Infobox": {
+                "Content": "This is a test InfoBox module!\n\nIt supports multiple lines of text.\n\nTry enabling the memorize feature to hide random words for memorization practice.",
+                "Center": false,
+                "Memorize": false,
+                "MemorizeFactor": 80
+              }
+            }
+          ]
+        },
+        {
+          "uniqueid": "col-test-2",
+          "md": 6,
+          "elements": [
+            {
+              "uniqueid": "infobox-test-2",
+              "element": "InfoBox",
+              "title": "Centered InfoBox with Memorize",
+              "showHeader": true,
+              "Infobox": {
+                "Content": "The quick brown fox jumps over the lazy dog.\n\nThis text is centered and has memorize enabled.\n\nSome words will be randomly hidden.",
+                "Center": true,
+                "Memorize": true,
+                "MemorizeFactor": 30
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "PageSettings": {}
+}
