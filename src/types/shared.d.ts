@@ -45,6 +45,7 @@ export interface DomainSettings {
   SidebarSettings?: string
   CustomCSS?: string
   MenuItems?: string  // JSON string of menu items
+  SettingsJson?: string  // JSON string containing all portal settings including menu
 }
 
 // System information interface
