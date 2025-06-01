@@ -131,7 +131,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemStore } from '@/stores/system'
@@ -226,11 +226,10 @@ const loadDashboardData = async () => {
     console.log('Current system unique key:', systemUniqueKey)
     
     // Get dashboard layout for insight dashboard
-    // Note: We should use the UniqueSystemKey, not the contextId directly
+    // The template service will automatically use the current system's UniqueKey
     const layout = await templateService.getDashboardLayout(
-      'insightDashboard', // layout type
-      systemUniqueKey || undefined, // system unique key (NOT contextId)
-      undefined // object ID
+      'insightDashboard' // layout type
+      // No need to pass systemUniqueKey - it uses the current one automatically
     )
     console.log('Dashboard layout:', layout)
     
@@ -285,6 +284,27 @@ onMounted(async () => {
   console.log('InsightDashboard mounted with query:', route.query)
   // System switching is handled by useSystemContext composable
   loadDashboardData()
+  
+  // Listen for system switch events to reload layout
+  const handleSystemSwitch = () => {
+    console.log('System switched, reloading dashboard layout...')
+    loadDashboardData()
+  }
+  
+  const handleSystemKeyChange = (event: any) => {
+    console.log('System unique key changed:', event.detail)
+    console.log('Reloading dashboard layout with new system key...')
+    loadDashboardData()
+  }
+  
+  window.addEventListener('system-switched', handleSystemSwitch)
+  window.addEventListener('system-unique-key-changed', handleSystemKeyChange)
+  
+  // Cleanup on unmount
+  onUnmounted(() => {
+    window.removeEventListener('system-switched', handleSystemSwitch)
+    window.removeEventListener('system-unique-key-changed', handleSystemKeyChange)
+  })
 })
 </script>
 

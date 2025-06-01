@@ -442,8 +442,11 @@ export const useAuthStore = defineStore('auth', () => {
             
             if (userData.UniqueSystemKey) {
               const { default: templateService } = await import('@/services/template.service')
+              console.log('🔑 Setting new UniqueSystemKey:', userData.UniqueSystemKey, 'for system:', systemId)
               templateService.setSystemUniqueKey(userData.UniqueSystemKey)
-              console.log('Updated UniqueSystemKey for new system')
+              console.log('✅ Updated UniqueSystemKey for new system')
+            } else {
+              console.warn('⚠️ No UniqueSystemKey in userData for system:', systemId)
             }
             
             // Update user info with fresh data

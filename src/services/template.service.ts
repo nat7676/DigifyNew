@@ -289,7 +289,14 @@ class TemplateService {
    * Set the system unique key for layout generation
    */
   setSystemUniqueKey(key: string): void {
+    const oldKey = systemUniqueKey
     systemUniqueKey = key
+    console.log('🔄 System unique key changed from', oldKey, 'to', key)
+    
+    // Emit event to notify components that system key has changed
+    window.dispatchEvent(new CustomEvent('system-unique-key-changed', { 
+      detail: { oldKey, newKey: key } 
+    }))
   }
 
   /**
