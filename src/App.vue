@@ -25,36 +25,42 @@
         <v-toolbar-title>Digify</v-toolbar-title>
         <v-spacer />
         
-        <!-- User Menu -->
-        <v-menu v-if="user">
-          <template #activator="{ props }">
-            <v-btn
-              icon
-              v-bind="props"
-            >
-              <v-avatar size="36">
-                <v-img
-                  v-if="user.profileImage"
-                  :src="user.profileImage"
-                  :alt="user.name"
-                />
-                <v-icon v-else>mdi-account-circle</v-icon>
-              </v-avatar>
-            </v-btn>
-          </template>
-          <v-list>
-            <v-list-item>
-              <v-list-item-title>{{ user.name }}</v-list-item-title>
-              <v-list-item-subtitle>{{ user.email }}</v-list-item-subtitle>
-            </v-list-item>
-            <v-divider />
-            <v-list-item
-              prepend-icon="mdi-logout"
-              title="Logout"
-              @click="logout"
-            />
-          </v-list>
-        </v-menu>
+        <!-- User Info and Menu -->
+        <div v-if="user" class="d-flex align-center">
+          <div class="text-right mr-2">
+            <div class="text-body-2 font-weight-medium">{{ user.name }}</div>
+            <div class="text-caption text-medium-emphasis">{{ systemName }}</div>
+          </div>
+          <v-menu>
+            <template #activator="{ props }">
+              <v-btn
+                icon
+                v-bind="props"
+              >
+                <v-avatar size="36">
+                  <v-img
+                    v-if="user.profileImage"
+                    :src="user.profileImage"
+                    :alt="user.name"
+                  />
+                  <v-icon v-else>mdi-account-circle</v-icon>
+                </v-avatar>
+              </v-btn>
+            </template>
+            <v-list>
+              <v-list-item>
+                <v-list-item-title>{{ user.name }}</v-list-item-title>
+                <v-list-item-subtitle>{{ user.email }}</v-list-item-subtitle>
+              </v-list-item>
+              <v-divider />
+              <v-list-item
+                prepend-icon="mdi-logout"
+                title="Logout"
+                @click="logout"
+              />
+            </v-list>
+          </v-menu>
+        </div>
       </v-app-bar>
 
       <!-- Main Content -->
@@ -108,11 +114,13 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
+import { useSystemStore } from '@/stores/system'
 import DynamicMenu from '@/components/layout/DynamicMenu.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const uiStore = useUIStore()
+const systemStore = useSystemStore()
 
 // Reactive state
 const drawer = ref(true)
@@ -123,6 +131,7 @@ const loading = ref(false)
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const user = computed(() => authStore.user)
 const snackbar = computed(() => uiStore.snackbar)
+const systemName = computed(() => systemStore.systemName)
 
 // Methods
 // Removed unused navigateTo function - navigation is handled by router-link

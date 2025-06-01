@@ -56,6 +56,8 @@ export interface SystemInfo {
   description?: string
   created: string
   settings?: any
+  profileImage?: string
+  rID?: number  // Chat room ID
 }
 
 // Dashboard element interface

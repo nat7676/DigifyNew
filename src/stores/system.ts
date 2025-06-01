@@ -6,6 +6,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { DomainSettings, SystemInfo } from '@/types/shared'
+import { NodeEvent } from '@/modules/shared/shared'
 import templateService from '@/services/template.service'
 
 export const useSystemStore = defineStore('system', () => {
@@ -94,12 +95,54 @@ export const useSystemStore = defineStore('system', () => {
   }
 
   const loadSystemInfo = async () => {
-    // TODO: Load system info from server based on currentSystemId
-    systemInfo.value = {
-      id: currentSystemId.value,
-      name: 'Digify System',
-      description: 'Default system',
-      created: new Date().toISOString()
+    try {
+      // Load all systems the user has access to
+      const { default: socketService } = await import('@/services/socket.service')
+      const response = await socketService.sendRequest(NodeEvent.Api, {
+        path: '/Module/CompanyUserCache',
+        data: {
+          type: 'AllSystems'
+        },
+        settings: {}
+      })
+      
+      if (response.ApiResp?.tables?.[0]?.rows) {
+        const systems = response.ApiResp.tables[0].rows
+        
+        // Find the current system
+        const currentSystem = systems.find((sys: any) => sys.SystemID === currentSystemId.value)
+        
+        if (currentSystem) {
+          systemInfo.value = {
+            id: currentSystem.SystemID,
+            name: currentSystem.Name || `System ${currentSystem.SystemID}`,
+            description: currentSystem.Description || '',
+            created: currentSystem.Created || new Date().toISOString(),
+            profileImage: currentSystem.ProfileImage,
+            rID: currentSystem.rID
+          }
+        } else {
+          // Fallback if system not found
+          systemInfo.value = {
+            id: currentSystemId.value,
+            name: `System ${currentSystemId.value}`,
+            description: 'System information not available',
+            created: new Date().toISOString()
+          }
+        }
+        
+        // Store all available systems for future use
+        availableSystemIds.value = systems.map((sys: any) => sys.SystemID)
+      }
+    } catch (error) {
+      console.error('Failed to load system info:', error)
+      // Use fallback values
+      systemInfo.value = {
+        id: currentSystemId.value,
+        name: `System ${currentSystemId.value}`,
+        description: 'Default system',
+        created: new Date().toISOString()
+      }
     }
   }
 
@@ -118,10 +161,12 @@ export const useSystemStore = defineStore('system', () => {
     }
   }
 
-  const setCurrentSystemId = (systemId: number) => {
+  const setCurrentSystemId = async (systemId: number) => {
     currentSystemId.value = systemId
     // Also add to available systems if not already there
     addAvailableSystem(systemId)
+    // Load system info for the new system
+    await loadSystemInfo()
   }
 
   const setServerUrl = (url: string) => {
@@ -159,7 +204,10 @@ export const useSystemStore = defineStore('system', () => {
       console.warn('Domain settings will load when socket connects:', error.message)
     })
     
-    await loadSystemInfo()
+    // Load system info after we have the current system ID
+    loadSystemInfo().catch(error => {
+      console.warn('System info will load when socket connects:', error.message)
+    })
   }
 
   return {
