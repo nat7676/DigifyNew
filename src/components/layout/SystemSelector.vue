@@ -118,9 +118,8 @@ const loadAvailableSystems = async () => {
   
   try {
     const response = await socketService.sendRequest(NodeEvent.Api, {
-      path: '/Module/CompanyUserCache',
+      path: '/cache/nodecustomer/CompanyUserCache/AllSystems',
       data: {
-        type: 'AllSystems'
       },
       settings: {}
     })
