@@ -25,6 +25,7 @@ declare module 'vue' {
     LayoutTheme: typeof import('./components/dashboard-modules/modules/LayoutTheme.vue')['default']
     ModuleNotFound: typeof import('./components/dashboard-modules/ModuleNotFound.vue')['default']
     PortalSelector: typeof import('./components/layout/PortalSelector.vue')['default']
+    ProjectDuplicate: typeof import('./components/dashboard-modules/modules/ProjectDuplicate.vue')['default']
     ProjectUserStatus: typeof import('./components/dashboard-modules/modules/ProjectUserStatus.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

@@ -47,6 +47,7 @@ const moduleRegistry: Record<string, () => Promise<Component>> = {
   ProjectUserStatus: () => import('./modules/ProjectUserStatus.vue'),
   Carousel: () => import('./modules/Carousel.vue'),
   UserProfile: () => import('./modules/UserProfile.vue'),
+  ProjectDuplicate: () => import('./modules/ProjectDuplicate.vue'),
   
   // System modules
   DashboardNotFound: () => import('./DashboardNotFound.vue'),
