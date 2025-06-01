@@ -44,22 +44,24 @@ export const useAuthStore = defineStore('auth', () => {
   const currentToken = computed(() => {
     // Return the token for current system, or the first valid token if none exists for current system
     const currentSysToken = accessTokens.value[currentSystemId.value]
-    if (currentSysToken) return currentSysToken
+    let token = currentSysToken
     
-    // If no token for current system, return the first valid token but with updated systemid
-    const validToken = Object.values(accessTokens.value).find(token => 
-      token && token.expire > Date.now() / 1000
-    )
-    
-    if (validToken) {
-      // Return a copy with the current system ID to prevent route guard issues
-      return {
-        ...validToken,
-        systemid: currentSystemId.value
+    if (!token) {
+      // If no token for current system, return the first valid token but with updated systemid
+      const validToken = Object.values(accessTokens.value).find(token => 
+        token && token.expire > Date.now() / 1000
+      )
+      
+      if (validToken) {
+        // Return a copy with the current system ID to prevent route guard issues
+        token = {
+          ...validToken,
+          systemid: currentSystemId.value
+        }
       }
     }
     
-    return null
+    return token
   })
 
   const bearerToken = computed(() => {
