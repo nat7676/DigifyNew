@@ -260,16 +260,25 @@ const loadDashboardData = async () => {
   try {
     // Load template cache data from service
     const domain = window.location.hostname
-    await templateService.getPortalSettings(domain) // This sets the portal unique key internally
+    
+    // Ensure portal settings are loaded first
+    if (!templateService.isPortalInitialized()) {
+      console.log('Portal not initialized, loading portal settings...')
+      await templateService.getPortalSettings(domain) // This sets the portal unique key internally
+    }
     
     // Check if we have the system unique key (for debugging)
-    console.log('System unique key:', templateService.getSystemUniqueKey())
+    console.log('Loading dashboard with keys:', {
+      systemUniqueKey: templateService.getSystemUniqueKey(),
+      portalUniqueKey: templateService.getPortalUniqueKey(),
+      portalID: templateService.getPortalID()
+    })
     
     // Get dashboard layout for the specific dashboard type
     const layoutType = layoutTypeMap[dashboardType.value] || dashboardType.value
     
     // The template service will automatically use the current system's UniqueKey
-    const layout = await templateService.getDashboardLayout(layoutType)
+    const layout = await templateService.getDashboardLayout(layoutType, undefined, contextId.value || undefined)
     
     if (layout) {
       dashboardData.value = layout

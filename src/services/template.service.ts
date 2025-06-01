@@ -57,6 +57,12 @@ class TemplateService {
         portalUniqueKey = portal.UniqueKey
         portalID = portal.PortalID
         
+        console.log('Portal settings loaded:', {
+          domain: actualDomain,
+          portalUniqueKey: portal.UniqueKey,
+          portalID: portal.PortalID
+        })
+        
         return portal
       }
       
@@ -109,7 +115,15 @@ class TemplateService {
     
     // Generate unique keys using the same logic as the old system
     const uniqueKeys = this.getAllLayoutCacheKeys(layoutType, objectId)
-    console.log('getDashboardLayout:', { layoutType, objectId, uniqueKeys, systemUniqueKey, portalUniqueKey })
+    console.log('getDashboardLayout:', { 
+      layoutType, 
+      objectId, 
+      uniqueKeys, 
+      systemUniqueKey, 
+      portalUniqueKey,
+      portalID,
+      domain: window.location.hostname
+    })
     
     // Restore original system key if we temporarily changed it
     if (useSystemKey) {
@@ -266,13 +280,15 @@ class TemplateService {
         break
       case 'system':
         if (!systemUniqueKey) throw new Error('System unique key required for system level')
-        uniqueKey = sha256(systemUniqueKey + '_' + layoutType)
+        // Include portal key for proper isolation between portals
+        uniqueKey = sha256(portalUniqueKey + '_' + systemUniqueKey + '_' + layoutType)
         break
       case 'object':
         if (!systemUniqueKey || !objectId) {
           throw new Error('System unique key and object ID required for object level')
         }
-        uniqueKey = sha256(systemUniqueKey + '_' + layoutType + '_' + objectId)
+        // Include portal key for proper isolation between portals
+        uniqueKey = sha256(portalUniqueKey + '_' + systemUniqueKey + '_' + layoutType + '_' + objectId)
         break
     }
 
@@ -324,6 +340,22 @@ class TemplateService {
   }
 
   /**
+   * Clear portal-specific data (useful when switching domains)
+   */
+  clearPortalData(): void {
+    portalUniqueKey = null
+    portalID = null
+    // Clear portal-related cache entries
+    const keysToDelete: string[] = []
+    templateCache.forEach((_, key) => {
+      if (key.startsWith('portal:')) {
+        keysToDelete.push(key)
+      }
+    })
+    keysToDelete.forEach(key => templateCache.delete(key))
+  }
+
+  /**
    * Set the system unique key for layout generation
    */
   setSystemUniqueKey(key: string): void {
@@ -354,6 +386,13 @@ class TemplateService {
    */
   getSystemUniqueKey(): string | null {
     return systemUniqueKey
+  }
+
+  /**
+   * Check if portal is initialized
+   */
+  isPortalInitialized(): boolean {
+    return portalUniqueKey !== null && portalID !== null
   }
 
   /**
@@ -410,21 +449,21 @@ class TemplateService {
     const mappedLayoutType = layoutTypeMap[layoutType] || layoutType
     
     
-    // Object-specific layout (most specific)
-    if (systemUniqueKey && objectId) {
-      const keyString = systemUniqueKey + '_' + mappedLayoutType + '_' + objectId
+    // Object-specific layout (most specific) - includes portal key for isolation
+    if (portalUniqueKey && systemUniqueKey && objectId) {
+      const keyString = portalUniqueKey + '_' + systemUniqueKey + '_' + mappedLayoutType + '_' + objectId
       const objectKey = sha256(keyString)
       keys.push(objectKey)
     }
     
-    // System-specific layout
-    if (systemUniqueKey) {
-      const keyString = systemUniqueKey + '_' + mappedLayoutType
+    // System-specific layout - includes portal key for isolation
+    if (portalUniqueKey && systemUniqueKey) {
+      const keyString = portalUniqueKey + '_' + systemUniqueKey + '_' + mappedLayoutType
       const systemKey = sha256(keyString)
       keys.push(systemKey)
     }
     
-    // Global layout (least specific)
+    // Portal-specific layout (global for the portal)
     if (portalUniqueKey && portalID) {
       const keyString = portalUniqueKey + '_' + mappedLayoutType
       const globalKey = sha256(keyString)
