@@ -1,21 +1,21 @@
 <template>
-  <v-col :cols="12" :md="column.md" class="dashboard-column">
+  <v-col :cols="12" :md="props.column.md" class="dashboard-column">
     <!-- Render elements in this column -->
     <dashboard-element
-      v-for="element in column.elements"
+      v-for="element in props.column.elements"
       :key="element.uniqueid"
       :element="element"
-      :minimized="minimizedModules"
+      :minimized="props.minimizedModules"
       class="mb-4"
       @module-not-found="handleModuleNotFound"
     />
     
     <!-- Render nested sections if any -->
     <dashboard-section
-      v-for="section in column.sections"
+      v-for="section in props.column.sections"
       :key="section.uniqueid"
       :section="section"
-      :minimized-modules="minimizedModules"
+      :minimized-modules="props.minimizedModules"
       @module-not-found="handleModuleNotFound"
     />
   </v-col>

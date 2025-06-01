@@ -1,10 +1,10 @@
 <template>
   <v-row class="dashboard-section">
     <dashboard-column
-      v-for="column in section.col"
+      v-for="column in props.section.col"
       :key="column.uniqueid"
       :column="column"
-      :minimized-modules="minimizedModules"
+      :minimized-modules="props.minimizedModules"
       @module-not-found="handleModuleNotFound"
     />
   </v-row>
