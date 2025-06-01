@@ -272,7 +272,6 @@ const handleAction = (action: any) => {
 
 // Lifecycle
 onMounted(() => {
-  console.log('Dashboard mounted')
   // TODO: Load actual dashboard data
 })
 </script>

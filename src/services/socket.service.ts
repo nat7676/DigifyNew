@@ -248,7 +248,6 @@ export async function sendRequest<T = any>(
   targetsockets.forEach((socket, index) => {
     socket.emit(NodeEvent.NewObject, request)
     if (config.SpreadType === NodeSpreadType.All) {
-      console.log(`Sent ${event} to socket ${index + 1}/${targetsockets.length}`)
     }
   })
 

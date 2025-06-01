@@ -17,10 +17,8 @@ export function useSystemContext() {
     if (requestedContextId) {
       const requestedSystemId = parseInt(requestedContextId)
       if (requestedSystemId && requestedSystemId !== authStore.currentSystemId) {
-        console.log('📍 System context: need to switch from system', authStore.currentSystemId, 'to', requestedSystemId)
         try {
           await authStore.switchSystem(requestedSystemId)
-          console.log('✅ Successfully switched to system:', requestedSystemId)
           
           // Emit an event to notify components that system has changed
           window.dispatchEvent(new CustomEvent('system-switched', { 
@@ -30,7 +28,6 @@ export function useSystemContext() {
             } 
           }))
         } catch (error) {
-          console.error('❌ Failed to switch to system', requestedSystemId, error)
           uiStore.showError(`Failed to switch to system ${requestedSystemId}. You may not have access.`)
           
           // Redirect back to the current system

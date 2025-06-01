@@ -292,8 +292,6 @@ const fetchUserData = async () => {
       settings: {}
     })
     
-    console.log('User data response:', response)
-    
     // The response has a different structure - it's in tables format
     if (response.ApiResp?.tables?.[0]?.rows?.length > 0) {
       userData.value = response.ApiResp.tables[0].rows[0]
@@ -301,11 +299,10 @@ const fetchUserData = async () => {
       // Store the UniqueSystemKey in template service for layout generation
       if (userData.value.UniqueSystemKey) {
         templateService.setSystemUniqueKey(userData.value.UniqueSystemKey)
-        console.log('Set system unique key:', userData.value.UniqueSystemKey)
       }
     }
   } catch (error) {
-    console.error('Failed to fetch user data:', error)
+    // Silently fail
   } finally {
     loading.value = false
   }
@@ -317,17 +314,15 @@ const fetchPortalSettings = async () => {
     const settings = await templateService.getPortalSettings(domain)
     if (settings) {
       portalSettings.value = settings
-      console.log('Portal settings:', settings)
     }
   } catch (error) {
-    console.error('Failed to fetch portal settings:', error)
+    // Silently fail
   }
 }
 
 // Watch for system changes and reload data
 watch(() => authStore.currentSystemId, async (newSystemId, oldSystemId) => {
   if (newSystemId && newSystemId !== oldSystemId) {
-    console.log('System changed in Profile, reloading user data')
     await fetchUserData()
   }
 })

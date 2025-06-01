@@ -218,22 +218,14 @@ const handleLogin = async () => {
     // Clear debug on success
     debugResponse.value = null
     
-    // Debug navigation
-    console.log('Login successful, navigating to dashboard...')
-    console.log('Current route:', router.currentRoute.value.path)
-    console.log('Is authenticated:', authStore.isAuthenticated)
-    
     // Check if we have a redirect URL to go back to
     const redirectUrl = authStore.redirectUrl
-    console.log('Login successful, checking redirectUrl:', redirectUrl)
     if (redirectUrl) {
-      console.log('Redirecting to stored URL:', redirectUrl)
       authStore.setRedirectUrl(null) // Clear it
       await router.push(redirectUrl)
     } else {
       // Use default navigation with contextId
       const systemId = authStore.currentToken?.systemid || 1
-      console.log('No redirectUrl found, using default navigation with systemId:', systemId)
       await router.push({ path: '/insight/dashboard', query: { contextId: systemId } })
     }
   } catch (error: any) {
@@ -297,13 +289,11 @@ onMounted(() => {
     // Check for redirect URL first
     const redirectUrl = authStore.redirectUrl
     if (redirectUrl) {
-      console.log('Already authenticated, redirecting to stored URL:', redirectUrl)
       authStore.setRedirectUrl(null) // Clear it
       router.push(redirectUrl)
     } else {
       // Use default navigation with current system's contextId
       const contextId = authStore.currentSystemId || authStore.currentToken?.systemid || 1
-      console.log('Already authenticated, redirecting to dashboard with contextId:', contextId)
       router.push({ path: '/insight/dashboard', query: { contextId } })
     }
   }

@@ -61,7 +61,6 @@ export const useSystemStore = defineStore('system', () => {
       // First, ensure portal settings are loaded (this sets the portal unique key)
       const portalSettings = await templateService.getPortalSettings(domain)
       if (portalSettings) {
-        console.log('Portal settings loaded:', portalSettings)
         // Store the portal ID from the portal settings
         portalId.value = portalSettings.PortalID
       }

@@ -214,16 +214,12 @@ const loadDashboardData = async () => {
 
   try {
     // Load template cache data
-    console.log('Loading insight dashboard with contextId:', contextId.value)
-    
     // Get domain settings first
     const domain = window.location.hostname
     const portalSettings = await templateService.getPortalSettings(domain)
-    console.log('Portal settings:', portalSettings)
     
     // Try to ensure we have the system unique key
     const systemUniqueKey = templateService.getSystemUniqueKey()
-    console.log('Current system unique key:', systemUniqueKey)
     
     // Get dashboard layout for insight dashboard
     // The template service will automatically use the current system's UniqueKey
@@ -231,12 +227,9 @@ const loadDashboardData = async () => {
       'insightDashboard' // layout type
       // No need to pass systemUniqueKey - it uses the current one automatically
     )
-    console.log('Dashboard layout:', layout)
     
     if (layout) {
       dashboardData.value = layout
-    } else {
-      console.log('No layout found, using default dashboard data')
     }
     
     // If we have a contextId, use it for loading system-specific data
@@ -247,8 +240,6 @@ const loadDashboardData = async () => {
       systemStore.setCurrentSystemId(systemId)
       
       // Load context-specific data
-      console.log('Loading context-specific data for system:', systemId)
-      
       // Note: The actual data loading would happen here based on the contextId
       // For now, we're just using mock data
     }
@@ -272,7 +263,6 @@ const uploadDocument = () => {
 // Watch for context ID changes to reload data
 watch(contextId, async (newContextId, oldContextId) => {
   if (newContextId && newContextId !== oldContextId) {
-    console.log('Context ID changed, reloading dashboard data')
     // System switching is handled by useSystemContext composable
     // Just reload the dashboard data for the new context
     loadDashboardData()
@@ -281,19 +271,15 @@ watch(contextId, async (newContextId, oldContextId) => {
 
 // Lifecycle
 onMounted(async () => {
-  console.log('InsightDashboard mounted with query:', route.query)
   // System switching is handled by useSystemContext composable
   loadDashboardData()
   
   // Listen for system switch events to reload layout
   const handleSystemSwitch = () => {
-    console.log('System switched, reloading dashboard layout...')
     loadDashboardData()
   }
   
   const handleSystemKeyChange = (event: any) => {
-    console.log('System unique key changed:', event.detail)
-    console.log('Reloading dashboard layout with new system key...')
     loadDashboardData()
   }
   

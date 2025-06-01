@@ -76,11 +76,8 @@ router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   const requiresAuth = to.meta.requiresAuth !== false
 
-  console.log(`🔄 Navigation: ${from.fullPath} -> ${to.fullPath}`)
-
   // Check authentication first
   if (requiresAuth && !authStore.isAuthenticated) {
-    console.log('User not authenticated, saving redirect URL:', to.fullPath)
     // Save the full path including query parameters
     authStore.setRedirectUrl(to.fullPath)
     next('/login')
@@ -91,9 +88,7 @@ router.beforeEach(async (to, from, next) => {
   if (to.path === '/login' && authStore.isAuthenticated) {
     // Check if we have a stored redirect URL (which might have a different contextId)
     const redirectUrl = authStore.redirectUrl
-    console.log('User authenticated at login, checking redirectUrl:', redirectUrl)
     if (redirectUrl) {
-      console.log('Found redirectUrl, navigating to:', redirectUrl)
       authStore.setRedirectUrl(null) // Clear it
       next(redirectUrl)
       return
@@ -114,7 +109,6 @@ router.beforeEach(async (to, from, next) => {
       // Special case: if this is the initial navigation and the path contains contextId
       // (user is entering URL directly), preserve it
       if (from.fullPath === '/' && to.fullPath.includes('contextId=')) {
-        console.log('Initial navigation with contextId, preserving URL:', to.fullPath)
         next()
         return
       }
@@ -125,7 +119,6 @@ router.beforeEach(async (to, from, next) => {
                               authStore.currentToken?.systemid || 
                               1
       
-      console.log('Adding missing contextId:', currentContextId)
       next({
         ...to,
         query: { ...to.query, contextId: currentContextId }
@@ -135,7 +128,6 @@ router.beforeEach(async (to, from, next) => {
       // Check if the contextId in URL differs from current system
       const requestedSystemId = parseInt(contextId)
       if (requestedSystemId && requestedSystemId !== authStore.currentSystemId) {
-        console.log(`ContextId in URL (${requestedSystemId}) differs from current system (${authStore.currentSystemId}), allowing navigation for system switch`)
         // Allow navigation - the component will handle the system switch
       }
     }

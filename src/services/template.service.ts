@@ -116,10 +116,6 @@ class TemplateService {
     useSystemKey?: string,
     objectId?: string
   ): Promise<any | null> {
-    console.log('getDashboardLayout called with:', { layoutType, useSystemKey, objectId })
-    console.log('Current portalUniqueKey:', portalUniqueKey)
-    console.log('Current portalID:', portalID)
-    console.log('Current systemUniqueKey:', systemUniqueKey)
     
     // If a specific system key is provided, temporarily set it
     const originalSystemKey = systemUniqueKey
@@ -135,7 +131,6 @@ class TemplateService {
       systemUniqueKey = originalSystemKey
     }
     
-    console.log('Generated uniqueKeys:', uniqueKeys)
 
     try {
       const request: TemplateCacheType = {
@@ -149,7 +144,6 @@ class TemplateService {
         request
       )
       
-      console.log('Layout response:', response)
       
       // The layout data should be in response.TemplateCacheResp
       const layoutData = response.TemplateCacheResp
@@ -291,8 +285,6 @@ class TemplateService {
   setSystemUniqueKey(key: string): void {
     const oldKey = systemUniqueKey
     systemUniqueKey = key
-    console.log('🔄 System unique key changed from', oldKey, 'to', key)
-    
     // Emit event to notify components that system key has changed
     window.dispatchEvent(new CustomEvent('system-unique-key-changed', { 
       detail: { oldKey, newKey: key } 
@@ -373,21 +365,12 @@ class TemplateService {
     // Use mapped layout type if available, otherwise use original
     const mappedLayoutType = layoutTypeMap[layoutType] || layoutType
     
-    console.log('🔑 === Generating Layout Cache Keys ===')
-    console.log('📊 Input parameters:')
-    console.log('  - layoutType:', layoutType, '→ mapped to:', mappedLayoutType)
-    console.log('  - objectId:', objectId)
-    console.log('  - systemUniqueKey:', systemUniqueKey)
-    console.log('  - portalUniqueKey:', portalUniqueKey)
-    console.log('  - portalID:', portalID)
     
     // Object-specific layout (most specific)
     if (systemUniqueKey && objectId) {
       const keyString = systemUniqueKey + '_' + mappedLayoutType + '_' + objectId
       const objectKey = sha256(keyString)
       keys.push(objectKey)
-      console.log('🎯 Object key string:', keyString)
-      console.log('🎯 Object key hash:', objectKey)
     }
     
     // System-specific layout
@@ -395,8 +378,6 @@ class TemplateService {
       const keyString = systemUniqueKey + '_' + mappedLayoutType
       const systemKey = sha256(keyString)
       keys.push(systemKey)
-      console.log('🏢 System key string:', keyString)
-      console.log('🏢 System key hash:', systemKey)
     }
     
     // Global layout (least specific)
@@ -404,12 +385,8 @@ class TemplateService {
       const keyString = portalUniqueKey + '_' + mappedLayoutType
       const globalKey = sha256(keyString)
       keys.push(globalKey)
-      console.log('🌍 Portal key string:', keyString)
-      console.log('🌍 Portal key hash:', globalKey)
     }
     
-    console.log('📦 Final keys array:', keys)
-    console.log('🔑 === End Cache Key Generation ===')
     
     return keys
   }

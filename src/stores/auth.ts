@@ -112,7 +112,6 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const setToken = async (systemId: number, token: AccessTokenInterface, skipLoginInfo = false) => {
-    console.log('Setting token for system:', systemId, token)
     currentSystemId.value = systemId
     accessTokens.value[systemId] = token
     saveTokenToStorage(systemId, token)
@@ -122,12 +121,8 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem(`refreshToken_${systemId}`, token.userProfile.RefreshToken)
     }
     
-    console.log('Current system ID:', currentSystemId.value)
-    console.log('Is authenticated after token set:', isAuthenticated.value)
-    
     // Skip logininfo call if requested (e.g., during system switch)
     if (skipLoginInfo) {
-      console.log('Skipping logininfo call')
       return
     }
     
@@ -139,29 +134,15 @@ export const useAuthStore = defineStore('auth', () => {
         settings: {}
       })
       
-      console.log('logininfo response (login):', response)
-      
       // The response has a different structure - it's in tables format
       if (response.ApiResp?.tables?.[0]?.rows?.length > 0) {
         const userData = response.ApiResp.tables[0].rows[0]
-        console.log('User data (login):', userData)
-        console.log('UniqueSystemKey (login):', userData.UniqueSystemKey)
         
         // Store the UniqueSystemKey in template service
         if (userData.UniqueSystemKey) {
           const { default: templateService } = await import('@/services/template.service')
           templateService.setSystemUniqueKey(userData.UniqueSystemKey)
-          console.log('Stored UniqueSystemKey in template service (login)')
-        } else {
-          console.warn('No UniqueSystemKey found in user data (login)')
         }
-        
-        // Also store other user data if needed
-        if (userData.UniqueUserKey) {
-          console.log('UniqueUserKey:', userData.UniqueUserKey)
-        }
-      } else {
-        console.warn('No user data returned from API (login)')
       }
     } catch (error) {
       console.error('Failed to fetch user data after login:', error)
@@ -230,7 +211,6 @@ export const useAuthStore = defineStore('auth', () => {
           LatestChatMsg: new Date(),
           SessionID: newToken.SessionID
         })
-        console.log('✅ Refreshed AccessToken sent to all connected sockets')
       } catch (error) {
         console.error('Failed to send refreshed AccessToken to sockets:', error)
       }
@@ -257,7 +237,6 @@ export const useAuthStore = defineStore('auth', () => {
           LatestChatMsg: new Date(),
           SessionID: token.SessionID
         })
-        console.log('✅ AccessToken sent to all connected sockets')
       } catch (error) {
         console.error('Failed to send AccessToken to sockets:', error)
         // Don't throw - authentication might still work on some servers
@@ -276,7 +255,6 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     try {
       // TODO: Implement Microsoft SSO
-      console.log('Microsoft SSO would happen here')
     } finally {
       loading.value = false
     }
@@ -309,7 +287,6 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const switchSystem = async (systemId: number) => {
-    console.log('🔄 switchSystem called with systemId:', systemId, 'current:', currentSystemId.value)
     
     // Check if we already have a valid token for this system
     const existingToken = accessTokens.value[systemId]
@@ -336,7 +313,6 @@ export const useAuthStore = defineStore('auth', () => {
           LatestChatMsg: new Date(),
           SessionID: existingToken.SessionID
         })
-        console.log('✅ Switched system - AccessToken sent to all connected sockets')
       } catch (error) {
         console.error('Failed to send AccessToken to sockets:', error)
       }
@@ -354,7 +330,6 @@ export const useAuthStore = defineStore('auth', () => {
           if (userData.UniqueSystemKey) {
             const { default: templateService } = await import('@/services/template.service')
             templateService.setSystemUniqueKey(userData.UniqueSystemKey)
-            console.log('Updated UniqueSystemKey for system', systemId)
           }
         }
       } catch (error) {
@@ -365,18 +340,13 @@ export const useAuthStore = defineStore('auth', () => {
     }
     
     // We need to get a new token for this system
-    console.log('Need to fetch token for system:', systemId)
-    
     try {
       // Call the setgroup API to switch systems
-      console.log('📤 Calling setgroup API for system:', systemId)
       const response = await socketService.sendRequest(NodeEvent.Api, {
         path: `/Module/setgroup/${systemId}`,
         data: {},
         settings: {}
       })
-      
-      console.log('System switch response:', response)
       
       if (response.ApiResp?.tables?.[0]?.rows?.[0]?.AccessToken) {
         const tokenData = response.ApiResp.tables[0].rows[0]
@@ -391,7 +361,6 @@ export const useAuthStore = defineStore('auth', () => {
         if (!decodedToken) {
           throw new Error('Failed to decode access token')
         }
-        console.log('Decoded token:', decodedToken)
         
         // Create a new AccessTokenInterface object
         const newToken: AccessTokenInterface = {
@@ -415,14 +384,12 @@ export const useAuthStore = defineStore('auth', () => {
         await setToken(systemId, newToken, true)
         
         // Send the new AccessToken to all socket servers FIRST
-        console.log('📤 Sending new AccessToken to websocket servers')
         try {
           await socketService.sendRequest(NodeEvent.AccessToken, {
             AccessToken: newToken.AccessToken,
             LatestChatMsg: new Date(),
             SessionID: newToken.SessionID
           })
-          console.log('✅ New AccessToken sent to all connected sockets')
         } catch (error) {
           console.error('Failed to send new AccessToken to sockets:', error)
           // Don't throw - the switch was successful, just log the error
@@ -438,20 +405,15 @@ export const useAuthStore = defineStore('auth', () => {
           
           if (response.ApiResp?.tables?.[0]?.rows?.length > 0) {
             const userData = response.ApiResp.tables[0].rows[0]
-            console.log('User data after system switch:', userData)
             
             if (userData.UniqueSystemKey) {
               const { default: templateService } = await import('@/services/template.service')
-              console.log('🔑 Setting new UniqueSystemKey:', userData.UniqueSystemKey, 'for system:', systemId)
               templateService.setSystemUniqueKey(userData.UniqueSystemKey)
-              console.log('✅ Updated UniqueSystemKey for new system')
               
               // Store the UniqueSystemKey with the token to ensure consistency
               newToken.UniqueSystemKey = userData.UniqueSystemKey
               accessTokens.value[systemId] = newToken
               saveTokenToStorage(systemId, newToken)
-            } else {
-              console.warn('⚠️ No UniqueSystemKey in userData for system:', systemId)
             }
             
             // Update user info with fresh data
@@ -469,8 +431,6 @@ export const useAuthStore = defineStore('auth', () => {
         } catch (error) {
           console.error('Failed to fetch user data after system switch:', error)
         }
-        
-        console.log('✅ Successfully switched to system:', systemId)
       } else {
         throw new Error('No access token returned from setgroup API')
       }
@@ -542,24 +502,20 @@ export const useAuthStore = defineStore('auth', () => {
 
     // If we found a valid token, send it to all sockets after they connect
     if (firstValidToken && isAuthenticated.value) {
-      console.log('Found valid token, will send to sockets when connected')
       
       // Create a function to send the token
       const sendStoredToken = async () => {
         // Check if socket is connected
         if (!socketService.isConnected.value) {
-          console.log('Socket not connected yet, waiting...')
           return false
         }
         
-        console.log('Sending stored AccessToken to all sockets...')
         try {
           await socketService.sendRequest(NodeEvent.AccessToken, {
             AccessToken: firstValidToken!.AccessToken,
             LatestChatMsg: new Date(),
             SessionID: firstValidToken!.SessionID
           })
-          console.log('✅ Stored AccessToken sent to all connected sockets')
           
           // Also fetch user data to get UniqueSystemKey
           try {
@@ -569,13 +525,9 @@ export const useAuthStore = defineStore('auth', () => {
               settings: {}
             })
             
-            console.log('logininfo response:', response)
-            
             // The response has a different structure - it's in tables format
             if (response.ApiResp?.tables?.[0]?.rows?.length > 0) {
               const userData = response.ApiResp.tables[0].rows[0]
-              console.log('User data:', userData)
-              console.log('UniqueSystemKey:', userData.UniqueSystemKey)
               
               // Store the UniqueSystemKey in template service
               if (userData.UniqueSystemKey) {
@@ -584,33 +536,10 @@ export const useAuthStore = defineStore('auth', () => {
                 
                 // Only update if not set
                 if (!currentKey) {
-                  console.log('📝 Setting UniqueSystemKey from initialization:', userData.UniqueSystemKey)
                   templateService.setSystemUniqueKey(userData.UniqueSystemKey)
-                  console.log('Stored UniqueSystemKey in template service')
-                } else {
-                  console.log('✓ UniqueSystemKey already set:', currentKey, '(logininfo returned:', userData.UniqueSystemKey, ')')
-                  // Don't overwrite if we already have a key from system switch
                 }
-              } else {
-                console.warn('No UniqueSystemKey found in user data')
+                // Don't overwrite if we already have a key from system switch
               }
-              
-              // Also store other user data if needed
-              if (userData.UniqueUserKey) {
-                console.log('UniqueUserKey:', userData.UniqueUserKey)
-              }
-              
-              // Second table contains system users
-              if (response.ApiResp.tables[1]?.rows) {
-                console.log('System users:', response.ApiResp.tables[1].rows)
-              }
-              
-              // Third table contains settings
-              if (response.ApiResp.tables[2]?.rows) {
-                console.log('User settings:', response.ApiResp.tables[2].rows)
-              }
-            } else {
-              console.warn('No user data returned from API')
             }
           } catch (error) {
             console.error('Failed to fetch user data during initialization:', error)
@@ -640,8 +569,6 @@ export const useAuthStore = defineStore('auth', () => {
       
       // Start trying after a small delay
       setTimeout(tryToSend, 500)
-    } else {
-      console.log('No valid token found during initialization')
     }
 
     // Start session timeout monitoring
