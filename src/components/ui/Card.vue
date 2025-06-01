@@ -47,7 +47,7 @@ const contentClasses = computed(() => ({
 
 <style scoped>
 .dashboard-card {
-  height: 100%;
+  /* Card should size to its content, not fill parent height */
 }
 
 .dense-card {

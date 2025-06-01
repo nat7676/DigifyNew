@@ -4,6 +4,7 @@
     :show-title="element.showHeader !== false"
   >
     <div
+      class="info-content"
       :style="contentStyle"
       v-html="displayContent"
     />
@@ -132,6 +133,13 @@ watch(infoSettings, (newSettings) => {
 </script>
 
 <style scoped>
+.info-content {
+  /* Ensure content has appropriate min-height but doesn't take too much space */
+  min-height: 2rem;
+  /* Add some breathing room */
+  line-height: 1.5;
+}
+
 .edit-controls {
   padding: 0;
 }
