@@ -51,6 +51,7 @@ const moduleRegistry: Record<string, () => Promise<Component>> = {
   // System modules
   DashboardNotFound: () => import('./DashboardNotFound.vue'),
   LayoutDarkmode: () => import('./modules/LayoutDarkmode.vue'),
+  LayoutTheme: () => import('./modules/LayoutTheme.vue'),
   
   // Add more modules as they are created
   // Example of how to add new modules:
