@@ -18,11 +18,11 @@
       </h3>
       
       <p class="text-body-2 text-grey text-center mb-4">
-        <code class="module-name">{{ moduleName || 'Unknown' }}</code>
+        <code class="module-name">{{ displayModuleName }}</code>
       </p>
       
       <v-chip
-        v-if="!minimized && element.uniqueid"
+        v-if="!minimized && element?.uniqueid"
         size="x-small"
         variant="tonal"
         color="grey"
@@ -32,7 +32,7 @@
       
       <!-- Debug info in development -->
       <v-expansion-panels
-        v-if="!minimized && showDebug"
+        v-if="!minimized && showDebug && element"
         class="mt-4"
         variant="accordion"
       >
@@ -69,6 +69,9 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const showDebug = computed(() => import.meta.env.DEV)
+
+// Use props in computed to avoid unused variable warning
+const displayModuleName = computed(() => props.moduleName || 'Unknown')
 </script>
 
 <style scoped>
