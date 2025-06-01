@@ -21,6 +21,7 @@ declare module 'vue' {
     DynamicMenuItem: typeof import('./components/layout/DynamicMenuItem.vue')['default']
     ImageBox: typeof import('./components/dashboard-modules/modules/ImageBox.vue')['default']
     InfoBox: typeof import('./components/dashboard-modules/modules/InfoBox.vue')['default']
+    LayoutDarkmode: typeof import('./components/dashboard-modules/modules/LayoutDarkmode.vue')['default']
     ModuleNotFound: typeof import('./components/dashboard-modules/ModuleNotFound.vue')['default']
     PortalSelector: typeof import('./components/layout/PortalSelector.vue')['default']
     ProjectUserStatus: typeof import('./components/dashboard-modules/modules/ProjectUserStatus.vue')['default']

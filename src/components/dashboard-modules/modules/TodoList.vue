@@ -231,7 +231,6 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, watch, onMounted } from 'vue'
-import Card from '@/components/ui/Card.vue'
 import TextField from '@/components/ui/TextField.vue'
 import CheckBox from '@/components/ui/CheckBox.vue'
 import TodoItem from './TodoItem.vue'

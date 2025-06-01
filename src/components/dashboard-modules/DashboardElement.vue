@@ -1,5 +1,4 @@
 <template>
-  <div>Before {{ element.element }}</div>
   <component
     :is="moduleComponent"
     v-if="moduleComponent"
@@ -12,7 +11,6 @@
     :module-name="element.element"
     :element="element"
   />
-  <div>After {{ element.element }}</div>
 </template>
 
 <script setup lang="ts">
@@ -52,6 +50,7 @@ const moduleRegistry: Record<string, () => Promise<Component>> = {
   
   // System modules
   DashboardNotFound: () => import('./DashboardNotFound.vue'),
+  LayoutDarkmode: () => import('./modules/LayoutDarkmode.vue'),
   
   // Add more modules as they are created
   // Example of how to add new modules:
