@@ -56,6 +56,18 @@
               </v-list-item>
               <v-divider />
               <v-list-item
+                prepend-icon="mdi-pencil"
+                title="Toggle Edit Mode"
+                subtitle="Ctrl+D"
+                @click="uiStore.toggleEditMode()"
+              >
+                <template #append>
+                  <v-icon v-if="isEditMode" color="warning" size="small">
+                    mdi-circle
+                  </v-icon>
+                </template>
+              </v-list-item>
+              <v-list-item
                 prepend-icon="mdi-logout"
                 title="Logout"
                 @click="logout"
@@ -64,6 +76,27 @@
           </v-menu>
         </div>
       </v-app-bar>
+
+      <!-- Edit Mode Banner -->
+      <v-banner
+        v-if="isEditMode"
+        class="edit-mode-banner"
+        color="warning"
+        icon="mdi-pencil"
+        sticky
+      >
+        <v-banner-text>
+          <strong>Edit Mode Active</strong> - You can now edit dashboard elements
+        </v-banner-text>
+        <template #actions>
+          <v-btn
+            variant="text"
+            @click="uiStore.toggleEditMode()"
+          >
+            Exit Edit Mode
+          </v-btn>
+        </template>
+      </v-banner>
 
       <!-- Main Content -->
       <v-main>
@@ -118,7 +151,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
@@ -140,6 +173,7 @@ const loading = ref(false)
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const user = computed(() => authStore.user)
 const snackbar = computed(() => uiStore.snackbar)
+const isEditMode = computed(() => uiStore.isEditMode)
 
 // Methods
 // Removed unused navigateTo function - navigation is handled by router-link
@@ -168,12 +202,31 @@ const logout = async () => {
   }
 }
 
+// Keyboard shortcuts handler
+const handleKeyDown = (event: KeyboardEvent) => {
+  // Ctrl+D to toggle edit mode
+  if (event.ctrlKey && event.key === 'd') {
+    event.preventDefault() // Prevent browser bookmark dialog
+    if (isAuthenticated.value) {
+      uiStore.toggleEditMode()
+    }
+  }
+}
+
 // Lifecycle
 onMounted(() => {
   // Check authentication status
   if (!isAuthenticated.value) {
     router.push('/login')
   }
+
+  // Register keyboard shortcuts
+  document.addEventListener('keydown', handleKeyDown)
+})
+
+onUnmounted(() => {
+  // Cleanup keyboard shortcuts
+  document.removeEventListener('keydown', handleKeyDown)
 })
 </script>
 
@@ -186,5 +239,9 @@ onMounted(() => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.edit-mode-banner {
+  z-index: 1000;
 }
 </style>

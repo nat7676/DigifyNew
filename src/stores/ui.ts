@@ -31,6 +31,7 @@ export const useUIStore = defineStore('ui', () => {
   const darkMode = ref(false)
   const loading = ref(false)
   const loadingText = ref('')
+  const isEditMode = ref(false)
   const snackbar = ref<SnackbarOptions>({
     text: '',
     color: 'info',
@@ -55,6 +56,16 @@ export const useUIStore = defineStore('ui', () => {
 
   const toggleDarkMode = () => {
     darkMode.value = !darkMode.value
+  }
+
+  const toggleEditMode = () => {
+    isEditMode.value = !isEditMode.value
+    localStorage.setItem('RIEditMode', isEditMode.value ? '1' : '0')
+    showSnackbar({
+      text: isEditMode.value ? 'Edit mode enabled' : 'Edit mode disabled',
+      color: isEditMode.value ? 'warning' : 'info',
+      timeout: 2000
+    })
   }
 
   const setLoading = (state: boolean, text = '') => {
@@ -151,6 +162,12 @@ export const useUIStore = defineStore('ui', () => {
     if (savedRail !== null) {
       rail.value = savedRail === 'true'
     }
+
+    // Load edit mode preference
+    const savedEditMode = localStorage.getItem('RIEditMode')
+    if (savedEditMode !== null) {
+      isEditMode.value = savedEditMode === '1'
+    }
   }
 
   const savePreferences = () => {
@@ -213,6 +230,7 @@ export const useUIStore = defineStore('ui', () => {
     loadingText: computed(() => loadingText.value),
     snackbar: computed(() => snackbar.value),
     dialog: computed(() => dialog.value),
+    isEditMode: computed(() => isEditMode.value),
     
     // Computed
     isDarkMode,
@@ -222,6 +240,7 @@ export const useUIStore = defineStore('ui', () => {
     toggleDrawer,
     toggleRail,
     toggleDarkMode,
+    toggleEditMode,
     setLoading,
     setVuetifyInstance,
     showSnackbar,
