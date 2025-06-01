@@ -6,7 +6,7 @@
 import type { Setting } from '@/modules/shared/shared'
 
 export interface MenuItem {
-  title: string
+  title?: string  // Made optional for dividers
   url?: string
   icon?: string
   iconcolor?: string

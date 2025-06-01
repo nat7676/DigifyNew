@@ -44,6 +44,7 @@ export interface DomainSettings {
   MenuType?: string
   SidebarSettings?: string
   CustomCSS?: string
+  MenuItems?: string  // JSON string of menu items
 }
 
 // System information interface

@@ -16,7 +16,6 @@ class MenuService {
    */
   buildMainNavigationMenu(): MenuItem[] {
     const authStore = useAuthStore()
-    const systemStore = useSystemStore()
     
     // Get current context ID for URLs
     const contextId = authStore.currentSystemId || authStore.currentToken?.systemid || 1
@@ -211,7 +210,7 @@ class MenuService {
    * Filter menu items based on user permissions
    */
   filterMenuItemsByPermissions(items: MenuItem[]): MenuItem[] {
-    const authStore = useAuthStore()
+    // const authStore = useAuthStore() // Will be used when permission checking is implemented
     
     return items.filter(item => {
       // If no visibility setting, always show

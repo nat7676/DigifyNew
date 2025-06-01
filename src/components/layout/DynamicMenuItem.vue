@@ -9,7 +9,7 @@
     <!-- Menu Group with Children -->
     <v-list-group
       v-else-if="item.children && item.children.length > 0"
-      :value="item.title"
+      :value="item.title || 'group'"
     >
       <template #activator="{ props }">
         <v-list-item
@@ -57,7 +57,7 @@
         />
       </template>
       
-      <v-list-item-title>{{ item.title }}</v-list-item-title>
+      <v-list-item-title v-if="item.title">{{ item.title }}</v-list-item-title>
       
       <template v-if="item.badge" #append>
         <v-badge
