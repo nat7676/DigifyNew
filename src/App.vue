@@ -25,11 +25,13 @@
         <v-toolbar-title>Digify</v-toolbar-title>
         <v-spacer />
         
+        <!-- System Selector -->
+        <system-selector v-if="isAuthenticated" class="mr-4" />
+        
         <!-- User Info and Menu -->
         <div v-if="user" class="d-flex align-center">
           <div class="text-right mr-2">
             <div class="text-body-2 font-weight-medium">{{ user.name }}</div>
-            <div class="text-caption text-medium-emphasis">{{ systemName }}</div>
           </div>
           <v-menu>
             <template #activator="{ props }">
@@ -114,13 +116,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
-import { useSystemStore } from '@/stores/system'
 import DynamicMenu from '@/components/layout/DynamicMenu.vue'
+import SystemSelector from '@/components/layout/SystemSelector.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const uiStore = useUIStore()
-const systemStore = useSystemStore()
 
 // Reactive state
 const drawer = ref(true)
@@ -131,7 +132,6 @@ const loading = ref(false)
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const user = computed(() => authStore.user)
 const snackbar = computed(() => uiStore.snackbar)
-const systemName = computed(() => systemStore.systemName)
 
 // Methods
 // Removed unused navigateTo function - navigation is handled by router-link

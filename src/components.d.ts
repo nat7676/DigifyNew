@@ -16,6 +16,7 @@ declare module 'vue' {
     ModuleNotFound: typeof import('./components/dashboard-modules/ModuleNotFound.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SystemSelector: typeof import('./components/layout/SystemSelector.vue')['default']
     TestTokenAuth: typeof import('./components/TestTokenAuth.vue')['default']
     WergelandOrders: typeof import('./components/dashboard-modules/modules/WergelandOrders.vue')['default']
   }
