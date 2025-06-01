@@ -28,11 +28,8 @@ class TemplateService {
     const actualDomain = domain === 'localhost' ? 'my.digify.no' : domain
     const cacheKey = `portal:${actualDomain}`
     
-    console.log('Getting portal settings for domain:', actualDomain, '(requested:', domain, ')')
-    
     // Check cache first
     if (templateCache.has(cacheKey)) {
-      console.log('Found portal settings in cache')
       return templateCache.get(cacheKey)
     }
 
@@ -43,19 +40,13 @@ class TemplateService {
         uniqueKeys: []
       }
       
-      console.log('Sending portal request:', request)
-      
       const response = await socketService.sendRequest<any>(
         NodeEvent.TemplateCache,
         request
       )
 
-      console.log('Full portal response:', response)
-      
       // The portal data is returned directly in TemplateCacheResp
       const portal = response.TemplateCacheResp
-
-      console.log('Portal data:', portal)
 
       // Check if we have valid portal data
       if (portal && portal.UniqueKey && portal.PortalID) {
@@ -65,17 +56,12 @@ class TemplateService {
         // Store the portal unique key and ID for layout requests
         portalUniqueKey = portal.UniqueKey
         portalID = portal.PortalID
-        console.log('Stored portal UniqueKey:', portalUniqueKey)
-        console.log('Stored portal PortalID:', portalID)
         
         return portal
       }
       
-      console.log('No valid portal data found in response')
-      
       // If no portal data found and we're in development, use development defaults
       if (!portal && import.meta.env.DEV) {
-        console.log('Using development default portal settings')
         const devPortal: TemplateCachePortal = {
           UniqueKey: 'dev_portal_unique_key',
           PortalID: 1,
@@ -95,8 +81,6 @@ class TemplateService {
         templateCache.set(cacheKey, devPortal)
         portalUniqueKey = devPortal.UniqueKey
         portalID = devPortal.PortalID
-        console.log('Set development portal UniqueKey:', portalUniqueKey)
-        console.log('Set development portal PortalID:', portalID)
         
         return devPortal
       }
@@ -173,7 +157,6 @@ class TemplateService {
 
       // If no layout found and we're in development, return a default layout
       if (uniqueKeys.length === 0 || (portalUniqueKey && portalUniqueKey.startsWith('dev_'))) {
-        console.log('No layout found, returning default development layout')
         return {
           sections: [
             {
