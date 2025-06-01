@@ -242,6 +242,7 @@ export const useSystemStore = defineStore('system', () => {
   return {
     // State
     currentSystemId: computed(() => currentSystemId.value),
+    currentSystemName: computed(() => currentSystemName.value),
     availableSystemIds: computed(() => availableSystemIds.value),
     domainSettings: computed(() => domainSettings.value),
     systemInfo: computed(() => systemInfo.value),
