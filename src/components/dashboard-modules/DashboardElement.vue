@@ -43,6 +43,8 @@ const moduleRegistry: Record<string, () => Promise<Component>> = {
   wergelandOrders: () => import('./modules/WergelandOrders.vue'),
   InfoBox: () => import('./modules/InfoBox.vue'),
   ImageBox: () => import('./modules/ImageBox.vue'),
+  TodoList: () => import('./modules/TodoList.vue'),
+  ProjectUserStatus: () => import('./modules/ProjectUserStatus.vue'),
   
   // System modules
   DashboardNotFound: () => import('./DashboardNotFound.vue'),

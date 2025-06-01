@@ -21,6 +21,7 @@ declare module 'vue' {
     InfoBox: typeof import('./components/dashboard-modules/modules/InfoBox.vue')['default']
     ModuleNotFound: typeof import('./components/dashboard-modules/ModuleNotFound.vue')['default']
     PortalSelector: typeof import('./components/layout/PortalSelector.vue')['default']
+    ProjectUserStatus: typeof import('./components/dashboard-modules/modules/ProjectUserStatus.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SystemSelector: typeof import('./components/layout/SystemSelector.vue')['default']
@@ -28,6 +29,8 @@ declare module 'vue' {
     TestTokenAuth: typeof import('./components/TestTokenAuth.vue')['default']
     TextArea: typeof import('./components/ui/TextArea.vue')['default']
     TextField: typeof import('./components/ui/TextField.vue')['default']
+    TodoItem: typeof import('./components/dashboard-modules/modules/TodoItem.vue')['default']
+    TodoList: typeof import('./components/dashboard-modules/modules/TodoList.vue')['default']
     WergelandOrders: typeof import('./components/dashboard-modules/modules/WergelandOrders.vue')['default']
   }
 }
