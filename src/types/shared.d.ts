@@ -9,6 +9,7 @@ import type { UserObjType } from '@/modules/shared/shared'
 export interface AccessTokenInterface extends UserObjType {
   AccessToken: string
   PortalID: number
+  UniqueSystemKey?: string
   userProfile?: {
     Tel: number
     Name: string

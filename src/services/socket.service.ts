@@ -163,7 +163,9 @@ async function waitForConnection(): Promise<void> {
 
 // Get all connected sockets
 function getAllConnectedSockets(): Socket[] {
-  return sockets.value.filter(socket => socket.connected)
+  // Type assertion needed due to Vue ref unwrapping
+  const socketArray = sockets.value as unknown as Socket[]
+  return socketArray.filter(socket => socket.connected)
 }
 
 // Send request to server
@@ -245,7 +247,7 @@ export async function sendRequest<T = any>(
   pendingRequests.value.get(guid)!.startTime = startTime
 
   // Send request to all target sockets
-  targetsockets.forEach((socket, index) => {
+  targetsockets.forEach((socket) => {
     socket.emit(NodeEvent.NewObject, request)
     if (config.SpreadType === NodeSpreadType.All) {
     }

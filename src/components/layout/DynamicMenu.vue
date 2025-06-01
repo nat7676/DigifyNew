@@ -36,7 +36,7 @@ const loadMenu = async () => {
   } catch (error) {
     console.error('Failed to load menu:', error)
     // Fall back to default menu
-    menuItems.value = menuService.buildMainNavigationMenu()
+    menuItems.value = menuService.buildDefaultNavigationMenu()
   } finally {
     loading.value = false
   }

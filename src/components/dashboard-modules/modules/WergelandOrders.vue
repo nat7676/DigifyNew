@@ -30,6 +30,9 @@ const props = withDefaults(defineProps<Props>(), {
   minimized: false
 })
 
+// Log props to use them (remove in production)
+console.log('WergelandOrders props:', props)
+
 // Methods
 const loadData = async () => {
   data.value =  await executeSQLQueryWithCallback(

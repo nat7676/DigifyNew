@@ -125,17 +125,18 @@ const user = computed(() => authStore.user)
 const snackbar = computed(() => uiStore.snackbar)
 
 // Methods
-const navigateTo = (path: string) => {
-  // Get the current contextId from the URL
-  const currentRoute = router.currentRoute.value
-  const contextId = currentRoute.query.contextId || authStore.currentSystemId || 1
-  
-  // Navigate preserving the contextId
-  router.push({
-    path,
-    query: { contextId }
-  })
-}
+// Removed unused navigateTo function - navigation is handled by router-link
+// const navigateTo = (path: string) => {
+//   // Get the current contextId from the URL
+//   const currentRoute = router.currentRoute.value
+//   const contextId = currentRoute.query.contextId || authStore.currentSystemId || 1
+//   
+//   // Navigate preserving the contextId
+//   router.push({
+//     path,
+//     query: { contextId }
+//   })
+// }
 
 const logout = async () => {
   loading.value = true

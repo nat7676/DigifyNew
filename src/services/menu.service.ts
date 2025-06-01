@@ -388,7 +388,7 @@ class MenuService {
       )
       
       // Update local store
-      systemStore.menuItems = menuItems
+      systemStore.setMenuItems(menuItems)
       
       // Reset template cache to ensure fresh data
       await templateService.resetTemplateCache()

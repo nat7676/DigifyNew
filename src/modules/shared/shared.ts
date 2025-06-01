@@ -131,7 +131,7 @@ export const eventconfig: {
     LoginRequired: false,
     ConsoleLogger: {
       Color: colors.gray,
-      LogRequestResponse: (client, req, resp) => {
+      LogRequestResponse: (_client, req, resp) => {
         const reqAPI = req.Api;
         const respAPI = resp.ApiResp;
         if (!reqAPI || !respAPI) return "No API data";
@@ -285,7 +285,7 @@ export const eventconfig: {
     LoginRequired: true,
     ConsoleLogger: {
       Color: colors.magenta,
-      LogRequest: (client, req) => {
+      LogRequest: (_client, req) => {
         const reqGP = req.GP;
         if (!reqGP) return "No GP data";
 
@@ -307,12 +307,12 @@ export const eventconfig: {
     LoginRequired: true,
     ConsoleLogger: {
       Color: colors.gray,
-      LogRequest: (client, req) => {
+      LogRequest: (_client, req) => {
         const reqIglooPin = req.IglooPin;
         if (!reqIglooPin) return "No API data";
         return JSON.stringify(reqIglooPin);
       },
-      LogRequestResponse: (client, req, resp) => {
+      LogRequestResponse: (_client, _req, resp) => {
         const respIglooPin = resp.IglooPinResp;
         if (!respIglooPin) return "No API data";
         return JSON.stringify(respIglooPin);

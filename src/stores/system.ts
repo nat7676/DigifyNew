@@ -132,6 +132,10 @@ export const useSystemStore = defineStore('system', () => {
   const setOnlineStatus = (status: boolean) => {
     isOnline.value = status
   }
+  
+  const setMenuItems = (items: any[]) => {
+    menuItems.value = items
+  }
 
   const initialize = async () => {
     // Load saved values
@@ -186,6 +190,7 @@ export const useSystemStore = defineStore('system', () => {
     addAvailableSystem,
     setServerUrl,
     setOnlineStatus,
+    setMenuItems,
     initialize
   }
 })
