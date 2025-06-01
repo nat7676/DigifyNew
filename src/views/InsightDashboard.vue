@@ -130,18 +130,6 @@
       </v-col>
     </v-row>
 
-    <!-- Debug Info -->
-    <v-row v-if="showDebug" class="mt-6">
-      <v-col cols="12">
-        <v-card>
-          <v-card-title>Debug Information</v-card-title>
-          <v-divider />
-          <v-card-text>
-            <pre>{{ JSON.stringify(debugInfo, null, 2) }}</pre>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
   </div>
 </template>
 
@@ -168,7 +156,6 @@ useSystemContext()
 const loading = ref(true)
 const error = ref<string | null>(null)
 const dashboardData = ref<any>(null)
-const showDebug = ref(import.meta.env.DEV)
 
 // Layout type mapping - maps URL segments to dashboard layout types
 // Note: For most types, we use the URL segment directly (e.g., 'project' -> 'project')
@@ -293,29 +280,6 @@ const stats = ref([
   { label: 'Users', value: 8 }
 ])
 
-const debugInfo = computed(() => ({
-  contextId: contextId.value,
-  dashboardType: dashboardType.value,
-  objectId: objectId.value,
-  parsedRoute: parsedRoute.value,
-  route: {
-    path: route.path,
-    query: route.query,
-    params: route.params
-  },
-  auth: {
-    isAuthenticated: authStore.isAuthenticated,
-    currentSystem: authStore.currentToken?.systemid,
-    userId: authStore.user?.userid
-  },
-  templateCache: {
-    isLoading: loading.value,
-    hasError: !!error.value,
-    hasDashboardData: !!dashboardData.value,
-    layoutType: layoutTypeMap[dashboardType.value] || dashboardType.value
-  },
-  dashboardData: dashboardData.value
-}))
 
 // Methods
 const getDefaultDashboardLayout = () => {
