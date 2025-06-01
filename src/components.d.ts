@@ -17,6 +17,7 @@ declare module 'vue' {
     DebugToolbar: typeof import('./components/layout/DebugToolbar.vue')['default']
     DynamicMenu: typeof import('./components/layout/DynamicMenu.vue')['default']
     DynamicMenuItem: typeof import('./components/layout/DynamicMenuItem.vue')['default']
+    ImageBox: typeof import('./components/dashboard-modules/modules/ImageBox.vue')['default']
     InfoBox: typeof import('./components/dashboard-modules/modules/InfoBox.vue')['default']
     ModuleNotFound: typeof import('./components/dashboard-modules/ModuleNotFound.vue')['default']
     PortalSelector: typeof import('./components/layout/PortalSelector.vue')['default']

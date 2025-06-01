@@ -42,6 +42,7 @@ const moduleRegistry: Record<string, () => Promise<Component>> = {
   // Currently implemented modules
   wergelandOrders: () => import('./modules/WergelandOrders.vue'),
   InfoBox: () => import('./modules/InfoBox.vue'),
+  ImageBox: () => import('./modules/ImageBox.vue'),
   
   // System modules
   DashboardNotFound: () => import('./DashboardNotFound.vue'),
