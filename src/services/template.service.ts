@@ -135,15 +135,20 @@ class TemplateService {
       // Layout responses can be an array of layouts (from most to least specific)
       if (layoutData) {
         if (Array.isArray(layoutData) && layoutData.length > 0) {
-          // Return the most specific layout found (last in array)
-          const layout = layoutData[layoutData.length - 1]
-          
-          try {
-            return JSON.parse(layout.Content)
-          } catch (error) {
-            console.error('Failed to parse layout JSON:', error)
-            return null
+          // Return the first layout found with content (following old system behavior)
+          // The server returns layouts matching our keys, and we want the first match
+          // in our priority order (object-specific, then system-specific, then global)
+          for (const layout of layoutData) {
+            if (layout.Content) {
+              try {
+                return JSON.parse(layout.Content)
+              } catch (error) {
+                console.error('Failed to parse layout JSON:', error)
+                // Continue to next layout if this one fails to parse
+              }
+            }
           }
+          return null
         } else if (layoutData.Content) {
           // Single layout response
           try {
