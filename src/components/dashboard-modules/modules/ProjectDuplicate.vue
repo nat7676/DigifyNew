@@ -96,10 +96,7 @@ interface ObjectItemType {
 }
 
 interface Props {
-  element: DashboardElement & {
-    projectid?: number
-  }
-  projectid?: number
+  element: DashboardElement
 }
 
 const props = defineProps<Props>()
@@ -112,21 +109,25 @@ const loading = ref(true)
 const saving = ref(false)
 const projectSettings = ref<ProjectDuplicateType | null>(null)
 
-// Extract projectId from URL dynamically
+// Extract projectId from URL only
 const projectid = computed(() => {
-  // First check props
-  if (props.projectid) return props.projectid
-  if (props.element.projectid) return props.element.projectid
+  console.log('Current route path:', route.path)
+  console.log('Route params:', route.params)
   
-  // Then check if we're on a project route
+  // Check if we're on a project route
   if (route.path.includes('/project/')) {
     // Extract from path: /insight/project/14038
     const match = route.path.match(/\/project\/(\d+)/)
+    console.log('Regex match:', match)
     return match ? Number(match[1]) : null
   }
   
   // Also check route params (if defined in router)
-  return route.params.projectId ? Number(route.params.projectId) : null
+  if (route.params.projectId) {
+    return Number(route.params.projectId)
+  }
+  
+  return null
 })
 
 // Computed properties
