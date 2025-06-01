@@ -445,6 +445,11 @@ export const useAuthStore = defineStore('auth', () => {
               console.log('🔑 Setting new UniqueSystemKey:', userData.UniqueSystemKey, 'for system:', systemId)
               templateService.setSystemUniqueKey(userData.UniqueSystemKey)
               console.log('✅ Updated UniqueSystemKey for new system')
+              
+              // Store the UniqueSystemKey with the token to ensure consistency
+              newToken.UniqueSystemKey = userData.UniqueSystemKey
+              accessTokens.value[systemId] = newToken
+              saveTokenToStorage(systemId, newToken)
             } else {
               console.warn('⚠️ No UniqueSystemKey in userData for system:', systemId)
             }
@@ -575,8 +580,17 @@ export const useAuthStore = defineStore('auth', () => {
               // Store the UniqueSystemKey in template service
               if (userData.UniqueSystemKey) {
                 const { default: templateService } = await import('@/services/template.service')
-                templateService.setSystemUniqueKey(userData.UniqueSystemKey)
-                console.log('Stored UniqueSystemKey in template service')
+                const currentKey = templateService.getSystemUniqueKey()
+                
+                // Only update if not set
+                if (!currentKey) {
+                  console.log('📝 Setting UniqueSystemKey from initialization:', userData.UniqueSystemKey)
+                  templateService.setSystemUniqueKey(userData.UniqueSystemKey)
+                  console.log('Stored UniqueSystemKey in template service')
+                } else {
+                  console.log('✓ UniqueSystemKey already set:', currentKey, '(logininfo returned:', userData.UniqueSystemKey, ')')
+                  // Don't overwrite if we already have a key from system switch
+                }
               } else {
                 console.warn('No UniqueSystemKey found in user data')
               }

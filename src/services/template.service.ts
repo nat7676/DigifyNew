@@ -361,26 +361,55 @@ class TemplateService {
   getAllLayoutCacheKeys(layoutType: string, objectId?: string): string[] {
     const keys: string[] = []
     
+    // Map new layout types to old system layout types for compatibility
+    const layoutTypeMap: { [key: string]: string } = {
+      'insightDashboard': 'dashboard',
+      'personaldashboard': 'personaldashboard',
+      'company': 'company',
+      'contract': 'contract',
+      // Add more mappings as needed
+    }
+    
+    // Use mapped layout type if available, otherwise use original
+    const mappedLayoutType = layoutTypeMap[layoutType] || layoutType
+    
+    console.log('🔑 === Generating Layout Cache Keys ===')
+    console.log('📊 Input parameters:')
+    console.log('  - layoutType:', layoutType, '→ mapped to:', mappedLayoutType)
+    console.log('  - objectId:', objectId)
+    console.log('  - systemUniqueKey:', systemUniqueKey)
+    console.log('  - portalUniqueKey:', portalUniqueKey)
+    console.log('  - portalID:', portalID)
+    
     // Object-specific layout (most specific)
     if (systemUniqueKey && objectId) {
-      const objectKey = sha256(systemUniqueKey + '_' + layoutType + '_' + objectId)
+      const keyString = systemUniqueKey + '_' + mappedLayoutType + '_' + objectId
+      const objectKey = sha256(keyString)
       keys.push(objectKey)
-      console.log('Object key:', objectKey, `(${systemUniqueKey}_${layoutType}_${objectId})`)
+      console.log('🎯 Object key string:', keyString)
+      console.log('🎯 Object key hash:', objectKey)
     }
     
     // System-specific layout
     if (systemUniqueKey) {
-      const systemKey = sha256(systemUniqueKey + '_' + layoutType)
+      const keyString = systemUniqueKey + '_' + mappedLayoutType
+      const systemKey = sha256(keyString)
       keys.push(systemKey)
-      console.log('System key:', systemKey, `(${systemUniqueKey}_${layoutType})`)
+      console.log('🏢 System key string:', keyString)
+      console.log('🏢 System key hash:', systemKey)
     }
     
     // Global layout (least specific)
     if (portalUniqueKey && portalID) {
-      const globalKey = sha256(portalUniqueKey + '_' + layoutType)
+      const keyString = portalUniqueKey + '_' + mappedLayoutType
+      const globalKey = sha256(keyString)
       keys.push(globalKey)
-      console.log('Global key:', globalKey, `(${portalUniqueKey}_${layoutType})`)
+      console.log('🌍 Portal key string:', keyString)
+      console.log('🌍 Portal key hash:', globalKey)
     }
+    
+    console.log('📦 Final keys array:', keys)
+    console.log('🔑 === End Cache Key Generation ===')
     
     return keys
   }
