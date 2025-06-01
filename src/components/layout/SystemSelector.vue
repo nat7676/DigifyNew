@@ -34,7 +34,7 @@
           class="overflow-y-auto"
         >
           <v-list-item
-            v-for="system in availableSystems"
+            v-for="system in systemsWithAccess"
             :key="system.SystemID"
             :active="system.SystemID === currentSystemId"
             @click="switchToSystem(system.SystemID)"
@@ -103,10 +103,21 @@ const authStore = useAuthStore()
 const systemStore = useSystemStore()
 const uiStore = useUIStore()
 
+interface System {
+  SystemID: number
+  Name: string
+  ProfileImage: string
+  hasAccess: boolean
+}
+
 // State
 const menu = ref(false)
 const loading = ref(false)
-const availableSystems = ref<any[]>([])
+const availableSystems = ref<System[]>([])
+
+const systemsWithAccess = computed(() => {
+  return availableSystems.value.filter(system => system.hasAccess)
+})
 
 // Computed
 const currentSystemId = computed(() => authStore.currentSystemId || systemStore.currentSystemId)

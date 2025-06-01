@@ -221,7 +221,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from 'vue'
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 // Removed unused import
 import socketService from '@/services/socket.service'
@@ -341,5 +341,18 @@ onMounted(async () => {
     fetchUserData(),
     fetchPortalSettings()
   ])
+})
+
+// Listen for system switch events
+const handleSystemSwitch = async () => {
+  await fetchUserData()
+}
+
+onMounted(() => {
+  window.addEventListener('system-switched', handleSystemSwitch)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('system-switched', handleSystemSwitch)
 })
 </script>

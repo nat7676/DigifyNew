@@ -20,6 +20,7 @@ export const useSystemStore = defineStore('system', () => {
   const isOnline = ref(true)
   const maintenanceMode = ref(false)
   const menuItems = ref<any[]>([]) // Custom menu items from server
+  const currentSystemName = ref<string | null>(null) // Actual system name from logininfo
 
   // Computed
   const isDevelopment = computed(() => import.meta.env.DEV)
@@ -51,7 +52,8 @@ export const useSystemStore = defineStore('system', () => {
   })
 
   const systemName = computed(() => {
-    return systemInfo.value?.name || 'Digify'
+    // Use the actual system name from logininfo if available
+    return currentSystemName.value || systemInfo.value?.name || 'Digify'
   })
 
   // Methods
@@ -167,6 +169,8 @@ export const useSystemStore = defineStore('system', () => {
     addAvailableSystem(systemId)
     // Load system info for the new system
     await loadSystemInfo()
+    // Load the actual system name from logininfo
+    await loadSystemNameFromLoginInfo()
   }
 
   const setServerUrl = (url: string) => {
@@ -180,6 +184,26 @@ export const useSystemStore = defineStore('system', () => {
   
   const setMenuItems = (items: any[]) => {
     menuItems.value = items
+  }
+
+  const loadSystemNameFromLoginInfo = async () => {
+    try {
+      const { default: socketService } = await import('@/services/socket.service')
+      const response = await socketService.sendRequest(NodeEvent.Api, {
+        path: '/logininfo',
+        data: {},
+        settings: {}
+      })
+      
+      if (response.ApiResp?.tables?.[0]?.rows?.length > 0) {
+        const userData = response.ApiResp.tables[0].rows[0]
+        if (userData.SystemName) {
+          currentSystemName.value = userData.SystemName
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load system name from logininfo:', error)
+    }
   }
 
   const initialize = async () => {
@@ -207,6 +231,11 @@ export const useSystemStore = defineStore('system', () => {
     // Load system info after we have the current system ID
     loadSystemInfo().catch(error => {
       console.warn('System info will load when socket connects:', error.message)
+    })
+    
+    // Load system name from logininfo
+    loadSystemNameFromLoginInfo().catch(error => {
+      console.warn('System name will load when socket connects:', error.message)
     })
   }
 
@@ -239,6 +268,7 @@ export const useSystemStore = defineStore('system', () => {
     setServerUrl,
     setOnlineStatus,
     setMenuItems,
+    loadSystemNameFromLoginInfo,
     initialize
   }
 })
