@@ -17,6 +17,7 @@ declare global {
   const ref: typeof import('vue')['ref']
   const storeToRefs: typeof import('pinia')['storeToRefs']
   const useAuthStore: typeof import('./stores/index')['useAuthStore']
+  const useDebugStore: typeof import('./stores/index')['useDebugStore']
   const useRoute: typeof import('vue-router')['useRoute']
   const useRouter: typeof import('vue-router')['useRouter']
   const useSQL: typeof import('./composables/useSQL')['useSQL']
@@ -43,6 +44,7 @@ declare module 'vue' {
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
     readonly storeToRefs: UnwrapRef<typeof import('pinia')['storeToRefs']>
     readonly useAuthStore: UnwrapRef<typeof import('./stores/index')['useAuthStore']>
+    readonly useDebugStore: UnwrapRef<typeof import('./stores/index')['useDebugStore']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
     readonly useSQL: UnwrapRef<typeof import('./composables/useSQL')['useSQL']>

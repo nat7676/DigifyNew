@@ -106,6 +106,7 @@
             <v-tab value="auth">Auth</v-tab>
             <v-tab value="system">System</v-tab>
             <v-tab value="route">Route</v-tab>
+            <v-tab value="dashboard">Dashboard</v-tab>
             <v-tab value="storage">Storage</v-tab>
           </v-tabs>
           
@@ -124,6 +125,10 @@
             
             <v-window-item value="route">
               <pre class="debug-content">{{ JSON.stringify(routeDebugInfo, null, 2) }}</pre>
+            </v-window-item>
+            
+            <v-window-item value="dashboard">
+              <pre class="debug-content">{{ JSON.stringify(dashboardDebugInfo, null, 2) }}</pre>
             </v-window-item>
             
             <v-window-item value="storage">
@@ -162,12 +167,14 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemStore } from '@/stores/system'
 import { useUIStore } from '@/stores/ui'
+import { useDebugStore } from '@/stores/debug'
 import templateService from '@/services/template.service'
 
 const route = useRoute()
 const authStore = useAuthStore()
 const systemStore = useSystemStore()
 const uiStore = useUIStore()
+const debugStore = useDebugStore()
 
 // State
 const expanded = ref(false)
@@ -235,6 +242,20 @@ const routeDebugInfo = computed(() => ({
   meta: route.meta,
   fullPath: route.fullPath
 }))
+
+// Dashboard debug info from debug store
+const dashboardDebugInfo = computed(() => {
+  const data = debugStore.dashboardData || {}
+  return {
+    hasDashboardData: !!data.Desktop || !!data.PageSettings,
+    dashboardType: debugStore.dashboardType || 'unknown',
+    dashboardObjectId: debugStore.dashboardObjectId,
+    dashboardJSON: data,
+    message: !data.Desktop && !data.PageSettings 
+      ? 'No dashboard data loaded. Navigate to a dashboard page to see its JSON structure.'
+      : 'This is the current dashboard JSON structure:'
+  }
+})
 
 const storageDebugInfo = computed(() => {
   const localStorage = {} as Record<string, any>
@@ -312,6 +333,7 @@ const copyDebugInfo = async () => {
     auth: authDebugInfo.value,
     system: systemDebugInfo.value,
     route: routeDebugInfo.value,
+    dashboard: dashboardDebugInfo.value,
     storage: storageDebugInfo.value
   }
   

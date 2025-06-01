@@ -139,6 +139,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemStore } from '@/stores/system'
 import { useUIStore } from '@/stores/ui'
+import { useDebugStore } from '@/stores/debug'
 import templateService from '@/services/template.service'
 import { useSystemContext } from '@/composables/useSystemContext'
 import DashboardLayout from '@/components/dashboard-modules/DashboardLayout.vue'
@@ -148,6 +149,7 @@ const route = useRoute()
 const authStore = useAuthStore()
 const systemStore = useSystemStore()
 const uiStore = useUIStore()
+const debugStore = useDebugStore()
 
 // Handle system context switching
 useSystemContext()
@@ -327,10 +329,14 @@ const loadDashboardData = async () => {
     if (layout) {
       dashboardData.value = layout
       console.log('Loaded dashboard layout from template service')
+      // Update debug store with dashboard data
+      debugStore.setDashboardData(layout, layoutType, objectId.value)
     } else {
       console.log('No dashboard layout found in template service - will use default empty dashboard')
       // If no layout from template service, dashboardData remains null
       // and the default dashboard layout will be shown
+      // Update debug store to indicate no data
+      debugStore.setDashboardData(getDefaultDashboardLayout(), layoutType, objectId.value)
     }
     
     // If we have a contextId, use it for loading system-specific data
@@ -419,6 +425,8 @@ onMounted(async () => {
   onUnmounted(() => {
     window.removeEventListener('system-switched', handleSystemSwitch)
     window.removeEventListener('system-unique-key-changed', handleSystemKeyChange)
+    // Clear debug store when leaving dashboard
+    debugStore.clearDashboardData()
   })
 })
 </script>
