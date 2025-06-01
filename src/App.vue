@@ -25,9 +25,6 @@
         <v-toolbar-title>Digify</v-toolbar-title>
         <v-spacer />
         
-        <!-- Portal Selector (Debug only) -->
-        <layout-header-domain v-if="isAuthenticated" class="mr-2" />
-        
         <!-- System Selector -->
         <system-selector v-if="isAuthenticated" class="mr-4" />
         
@@ -114,6 +111,9 @@
 
     <!-- Debug Toolbar (floating, always accessible on localhost) -->
     <debug-toolbar />
+    
+    <!-- Hidden Portal Selector (triggered by debug toolbar) -->
+    <layout-header-domain />
   </v-app>
 </template>
 
@@ -124,8 +124,8 @@ import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import DynamicMenu from '@/components/layout/DynamicMenu.vue'
 import SystemSelector from '@/components/layout/SystemSelector.vue'
-import LayoutHeaderDomain from '@/components/layout/LayoutHeaderDomain.vue'
 import DebugToolbar from '@/components/layout/DebugToolbar.vue'
+import LayoutHeaderDomain from '@/components/layout/LayoutHeaderDomain.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
