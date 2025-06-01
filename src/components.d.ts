@@ -20,6 +20,7 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SystemSelector: typeof import('./components/layout/SystemSelector.vue')['default']
+    TestPortalSwitching: typeof import('./components/TestPortalSwitching.vue')['default']
     TestTokenAuth: typeof import('./components/TestTokenAuth.vue')['default']
     WergelandOrders: typeof import('./components/dashboard-modules/modules/WergelandOrders.vue')['default']
   }

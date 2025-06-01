@@ -58,8 +58,17 @@ export const useSystemStore = defineStore('system', () => {
 
   // Methods
   const loadDomainSettings = async () => {
-    // Get current domain
-    const domain = window.location.hostname
+    // Import getDomain to ensure consistent domain handling
+    const { getDomain } = await import('@/utils/domain')
+    
+    // Get current domain using getDomain to respect useportal
+    const domain = getDomain()
+    
+    console.log('loadDomainSettings:', {
+      hostname: window.location.hostname,
+      domain,
+      useportal: localStorage.getItem('useportal')
+    })
     
     try {
       // First, ensure portal settings are loaded (this sets the portal unique key)
@@ -67,6 +76,11 @@ export const useSystemStore = defineStore('system', () => {
       if (portalSettings) {
         // Store the portal ID from the portal settings
         portalId.value = portalSettings.PortalID
+        console.log('Portal settings loaded:', {
+          domain,
+          portalId: portalSettings.PortalID,
+          uniqueKey: portalSettings.UniqueKey
+        })
       }
       
       // Try to load from template service (localStorage with server fallback)

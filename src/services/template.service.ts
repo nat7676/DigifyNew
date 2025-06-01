@@ -10,6 +10,7 @@ import type {
   TemplateCacheType,
   TemplateCachePortal
 } from '@/modules/shared/shared'
+import { getDomain } from '@/utils/domain'
 
 // Remove unused interface - type is handled inline where needed
 
@@ -24,11 +25,18 @@ class TemplateService {
    * Get portal settings for a domain
    */
   async getPortalSettings(domain: string): Promise<TemplateCachePortal | null> {
-    // For localhost development, use the configured development domain
-    const actualDomain = domain === 'localhost' ? 'my.digify.no' : domain
+    // Use getDomain() to ensure consistent domain mapping
+    const actualDomain = domain === 'localhost' || domain === 'localhost.digify.no' 
+      ? getDomain() // This will respect useportal localStorage
+      : domain
     const cacheKey = `portal:${actualDomain}`
     
-    console.log('getPortalSettings called:', { domain, actualDomain, cacheKey })
+    console.log('getPortalSettings called:', { 
+      domain, 
+      actualDomain, 
+      cacheKey,
+      useportal: localStorage.getItem('useportal')
+    })
     
     // Check cache first
     if (templateCache.has(cacheKey)) {
@@ -62,14 +70,31 @@ class TemplateService {
         templateCache.set(cacheKey, portal)
         
         // Store the portal unique key and ID for layout requests
+        const oldPortalKey = portalUniqueKey
         portalUniqueKey = portal.UniqueKey
         portalID = portal.PortalID
         
         console.log('Portal settings loaded:', {
           domain: actualDomain,
           portalUniqueKey: portal.UniqueKey,
-          portalID: portal.PortalID
+          portalID: portal.PortalID,
+          previousPortalKey: oldPortalKey,
+          changed: oldPortalKey !== portal.UniqueKey
         })
+        
+        // If portal key changed, clear all cached layouts
+        if (oldPortalKey && oldPortalKey !== portal.UniqueKey) {
+          console.log('Portal key changed, clearing all cached layouts')
+          // Clear layout cache but keep portal cache
+          const portalEntries = new Map()
+          templateCache.forEach((value, key) => {
+            if (key.startsWith('portal:')) {
+              portalEntries.set(key, value)
+            }
+          })
+          templateCache.clear()
+          portalEntries.forEach((value, key) => templateCache.set(key, value))
+        }
         
         return portal
       }
@@ -130,7 +155,9 @@ class TemplateService {
       systemUniqueKey, 
       portalUniqueKey,
       portalID,
-      domain: window.location.hostname
+      domain: window.location.hostname,
+      actualDomain: getDomain(),
+      useportal: localStorage.getItem('useportal')
     })
     
     // Restore original system key if we temporarily changed it
@@ -288,15 +315,27 @@ class TemplateService {
         break
       case 'system':
         if (!systemUniqueKey) throw new Error('System unique key required for system level')
-        // Use only system key to match old system behavior
-        uniqueKey = sha256(systemUniqueKey + '_' + layoutType)
+        // For localhost, include domain to ensure portal isolation
+        const isLocalhost = window.location.hostname === 'localhost'
+        const currentDomain = getDomain()
+        uniqueKey = sha256(
+          isLocalhost 
+            ? currentDomain + '_' + systemUniqueKey + '_' + layoutType
+            : systemUniqueKey + '_' + layoutType
+        )
         break
       case 'object':
         if (!systemUniqueKey || !objectId) {
           throw new Error('System unique key and object ID required for object level')
         }
-        // Use only system key to match old system behavior
-        uniqueKey = sha256(systemUniqueKey + '_' + layoutType + '_' + objectId)
+        // For localhost, include domain to ensure portal isolation
+        const isLocalhost2 = window.location.hostname === 'localhost'
+        const currentDomain2 = getDomain()
+        uniqueKey = sha256(
+          isLocalhost2
+            ? currentDomain2 + '_' + systemUniqueKey + '_' + layoutType + '_' + objectId
+            : systemUniqueKey + '_' + layoutType + '_' + objectId
+        )
         break
     }
 
@@ -351,16 +390,27 @@ class TemplateService {
    * Clear portal-specific data (useful when switching domains)
    */
   clearPortalData(): void {
+    console.log('Clearing portal data and ALL cache entries')
     portalUniqueKey = null
     portalID = null
-    // Clear portal-related cache entries
-    const keysToDelete: string[] = []
-    templateCache.forEach((_, key) => {
-      if (key.startsWith('portal:')) {
-        keysToDelete.push(key)
-      }
-    })
-    keysToDelete.forEach(key => templateCache.delete(key))
+    // Clear ALL cache entries when switching portals
+    // This is important because layout cache keys depend on portal context
+    templateCache.clear()
+  }
+  
+  /**
+   * Force reload portal settings (useful when useportal changes)
+   */
+  async reloadPortalSettings(): Promise<TemplateCachePortal | null> {
+    // Clear all cached data
+    this.clearPortalData()
+    
+    // Get the current domain (respecting useportal)
+    const domain = getDomain()
+    console.log('Reloading portal settings for domain:', domain)
+    
+    // Load fresh portal settings
+    return this.getPortalSettings(domain)
   }
 
   /**
@@ -404,11 +454,27 @@ class TemplateService {
   }
 
   /**
+   * Force portal reinitialization - useful when switching portals
+   */
+  async reinitializePortal(): Promise<void> {
+    // Clear all portal-related data
+    this.clearPortalData()
+    
+    // Get the current domain (will respect useportal)
+    const domain = getDomain()
+    
+    // Reload portal settings
+    await this.getPortalSettings(domain)
+  }
+
+  /**
    * Load domain settings from localStorage with server fallback
    */
   async loadDomainSettings(domain: string): Promise<any> {
-    // Use the same domain mapping as getPortalSettings
-    const actualDomain = domain === 'localhost' ? 'my.digify.no' : domain
+    // Use getDomain() to ensure consistent domain mapping
+    const actualDomain = domain === 'localhost' || domain === 'localhost.digify.no'
+      ? getDomain() // This will respect useportal localStorage
+      : domain
     const storageKey = `IL_${actualDomain}`
     
     // Try localStorage first
@@ -457,31 +523,39 @@ class TemplateService {
     const mappedLayoutType = layoutTypeMap[layoutType] || layoutType
     
     
+    // IMPORTANT: For localhost with useportal, we need to ensure proper isolation
+    // by including the current domain in the cache key generation
+    const currentDomain = getDomain()
+    const isLocalhost = window.location.hostname === 'localhost'
+    
     // Object-specific layout (most specific)
-    // Uses only system key + layout + objectId (matches old system)
     if (systemUniqueKey && objectId) {
-      const keyString = systemUniqueKey + '_' + mappedLayoutType + '_' + objectId
+      // For localhost, include domain to ensure portal isolation
+      const keyString = isLocalhost 
+        ? currentDomain + '_' + systemUniqueKey + '_' + mappedLayoutType + '_' + objectId
+        : systemUniqueKey + '_' + mappedLayoutType + '_' + objectId
       const objectKey = sha256(keyString)
       keys.push(objectKey)
-      console.log('Object-specific key:', { keyString, objectKey })
+      console.log('Object-specific key:', { keyString, objectKey, domain: currentDomain })
     }
     
     // System-specific layout
-    // Uses only system key + layout (matches old system)
     if (systemUniqueKey) {
-      const keyString = systemUniqueKey + '_' + mappedLayoutType
+      // For localhost, include domain to ensure portal isolation
+      const keyString = isLocalhost
+        ? currentDomain + '_' + systemUniqueKey + '_' + mappedLayoutType
+        : systemUniqueKey + '_' + mappedLayoutType
       const systemKey = sha256(keyString)
       keys.push(systemKey)
-      console.log('System-specific key:', { keyString, systemKey })
+      console.log('System-specific key:', { keyString, systemKey, domain: currentDomain })
     }
     
     // Portal-specific layout (global for the portal)
-    // Uses only portal key + layout (matches old system)
     if (portalUniqueKey && portalID) {
       const keyString = portalUniqueKey + '_' + mappedLayoutType
       const globalKey = sha256(keyString)
       keys.push(globalKey)
-      console.log('Portal-specific key:', { keyString, globalKey })
+      console.log('Portal-specific key:', { keyString, globalKey, domain: currentDomain })
     }
     
     

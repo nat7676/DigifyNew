@@ -341,11 +341,17 @@ watch(dashboardType, async (newType, oldType) => {
 }, { immediate: false })
 
 // Watch for domain changes (e.g., when switching portals in localhost)
-watch(() => getDomain(), async (newDomain, oldDomain) => {
-  if (newDomain !== oldDomain) {
-    console.log('Domain changed, reloading portal settings:', { oldDomain, newDomain })
-    // Clear portal data and reload
-    templateService.clearPortalData()
+let lastKnownDomain = getDomain()
+watch(() => getDomain(), async (newDomain) => {
+  if (newDomain !== lastKnownDomain) {
+    console.log('Domain changed, reloading portal settings:', { 
+      oldDomain: lastKnownDomain, 
+      newDomain,
+      useportal: localStorage.getItem('useportal')
+    })
+    lastKnownDomain = newDomain
+    // Reinitialize portal and reload dashboard
+    await templateService.reinitializePortal()
     await loadDashboardData()
   }
 })
