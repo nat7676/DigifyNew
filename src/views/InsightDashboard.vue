@@ -35,7 +35,14 @@
       </v-col>
     </v-row>
 
-    <!-- Dashboard Content -->
+    <!-- Dashboard Layout from Template Cache -->
+    <dashboard-layout
+      v-else-if="dashboardData"
+      :layout="dashboardData"
+      @module-not-found="handleModuleNotFound"
+    />
+
+    <!-- Fallback Content when no template -->
     <v-row v-else>
       <!-- Contract Overview -->
       <v-col cols="12" md="8">
@@ -138,6 +145,7 @@ import { useSystemStore } from '@/stores/system'
 import { useUIStore } from '@/stores/ui'
 import templateService from '@/services/template.service'
 import { useSystemContext } from '@/composables/useSystemContext'
+import DashboardLayout from '@/components/dashboard-modules/DashboardLayout.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -203,8 +211,10 @@ const debugInfo = computed(() => ({
   },
   templateCache: {
     isLoading: loading.value,
-    hasError: !!error.value
-  }
+    hasError: !!error.value,
+    hasDashboardData: !!dashboardData.value
+  },
+  dashboardData: dashboardData.value
 }))
 
 // Methods
@@ -213,24 +223,48 @@ const loadDashboardData = async () => {
   error.value = null
 
   try {
-    // Load template cache data
-    // Get domain settings first
+    // For testing with the provided template cache response
+    // This would normally come from templateService.getDashboardLayout()
+    const mockTemplateCacheResponse = {
+      Event: "TemplateCache",
+      SubmitType: "Response",
+      Guid: "8b58ffbd-610d-41dc-b2bc-443bdf3b466c",
+      TemplateCacheResp: [
+        {
+          UniqueKey: "80a609acd428c45852532fbf52e1d8cd36288069bbd0a6aafa80784b99273480",
+          Content: "{\"Desktop\":[{\"uniqueid\":\"c209485f-ed7e-56a2-83a8-27971f77e98a\",\"col\":[{\"uniqueid\":\"2bd1618c-70ee-e496-9e98-782a1bf8cf02\",\"md\":12,\"elements\":[{\"uniqueid\":\"3561238b-6b71-d869-13ae-6f2fc63af8e7\",\"element\":\"wergelandOrders\",\"Settings\":[{\"ObjectType\":1,\"ObjectID\":\"3500513\"},{\"ObjectType\":32,\"ObjectID\":\"4745689944\"}],\"PageSettingsMinimizedMargins\":{\"boolvalue\":false},\"PageSettingsMinimizedModules\":{\"boolvalue\":false}}],\"sections\":[]}]}],\"settings\":{\"RequireLogin\":false,\"backurl\":\"\",\"backtitle\":\"\",\"MappedTagLists\":[],\"MappedCompanyLists\":[],\"MappedAutoTagLists\":[],\"ObjectTypeID\":null,\"PageSettingsMinimizedMargins\":{\"boolvalue\":false},\"PageSettingsMinimizedModules\":{\"boolvalue\":false},\"PageSettingsSetState\":{\"left\":\"notactive\",\"right\":\"notactive\",\"top\":\"notactive\",\"bottom\":\"notactive\"}},\"PageSettings\":{\"RequireLogin\":false,\"backurl\":\"\",\"backtitle\":\"\",\"MappedTagLists\":[],\"MappedCompanyLists\":[],\"MappedAutoTagLists\":[],\"ObjectTypeID\":null,\"PageSettingsMinimizedMargins\":{\"boolvalue\":false},\"PageSettingsMinimizedModules\":{\"boolvalue\":false},\"PageSettingsSetState\":{\"left\":\"notactive\",\"right\":\"notactive\",\"top\":\"notactive\",\"bottom\":\"notactive\"}}}"
+        }
+      ]
+    }
+    
+    // Parse the template cache response
+    if (mockTemplateCacheResponse.TemplateCacheResp && mockTemplateCacheResponse.TemplateCacheResp.length > 0) {
+      const templateData = mockTemplateCacheResponse.TemplateCacheResp[0]
+      try {
+        const parsedContent = JSON.parse(templateData.Content)
+        dashboardData.value = parsedContent
+        console.log('Loaded dashboard layout:', parsedContent)
+      } catch (parseError) {
+        console.error('Failed to parse template content:', parseError)
+        error.value = 'Failed to parse dashboard template'
+      }
+    }
+    
+    // Load template cache data from service (commented out for testing)
+    /*
     const domain = window.location.hostname
     const portalSettings = await templateService.getPortalSettings(domain)
     
-    // Try to ensure we have the system unique key
     const systemUniqueKey = templateService.getSystemUniqueKey()
     
-    // Get dashboard layout for insight dashboard
-    // The template service will automatically use the current system's UniqueKey
     const layout = await templateService.getDashboardLayout(
-      'insightDashboard' // layout type
-      // No need to pass systemUniqueKey - it uses the current one automatically
+      'insightDashboard'
     )
     
     if (layout) {
       dashboardData.value = layout
     }
+    */
     
     // If we have a contextId, use it for loading system-specific data
     if (contextId.value) {
@@ -258,6 +292,11 @@ const createNewContract = () => {
 
 const uploadDocument = () => {
   uiStore.showSnackbar('Upload document feature coming soon')
+}
+
+const handleModuleNotFound = (moduleName: string, element: any) => {
+  console.warn(`Module not found: ${moduleName}`, element)
+  uiStore.showSnackbar(`Module "${moduleName}" is not available`, 'warning')
 }
 
 // Watch for context ID changes to reload data

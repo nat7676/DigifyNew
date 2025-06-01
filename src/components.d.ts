@@ -7,8 +7,14 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    DashboardColumn: typeof import('./components/dashboard-modules/DashboardColumn.vue')['default']
+    DashboardElement: typeof import('./components/dashboard-modules/DashboardElement.vue')['default']
+    DashboardLayout: typeof import('./components/dashboard-modules/DashboardLayout.vue')['default']
+    DashboardSection: typeof import('./components/dashboard-modules/DashboardSection.vue')['default']
+    ModuleNotFound: typeof import('./components/dashboard-modules/ModuleNotFound.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     TestTokenAuth: typeof import('./components/TestTokenAuth.vue')['default']
+    WergelandOrders: typeof import('./components/dashboard-modules/modules/WergelandOrders.vue')['default']
   }
 }
